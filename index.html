@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Math Survival - Leaderboard V28</title>
+    <title>Math Survival - Leaderboard V30</title>
     <style>
         body {
             margin: 0; padding: 0; overflow: hidden;
@@ -11,7 +11,6 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none; -webkit-user-select: none; touch-action: none;
         }
-        /* 修正: 只針對遊戲主畫布放大，避免 HUD 小圖示被強行放大 */
         #gameCanvas { display: block; width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
         
         #loading-screen {
@@ -20,37 +19,37 @@
             color: #fbbf24; font-size: 32px; font-weight: bold; z-index: 1000;
         }
 
-        /* --- 左側專屬 UI 容器 (半透明不干擾遊戲) --- */
+        /* --- 左側專屬 UI 容器 (收窄至 180px) --- */
         #ui-container {
-            position: absolute; top: 15px; left: 15px; bottom: 15px; width: 260px;
-            display: flex; flex-direction: column; gap: 15px; z-index: 10; pointer-events: none;
+            position: absolute; top: 10px; left: 10px; bottom: 10px; width: 180px; /* 收窄寬度 */
+            display: flex; flex-direction: column; gap: 8px; z-index: 10; pointer-events: none;
         }
         .ui-box {
-            background: rgba(241, 245, 249, 0.4); /* 半透明底色 */
-            border: 3px solid rgba(148, 163, 184, 0.5); border-radius: 8px;
-            padding: 10px; pointer-events: auto; /* 允許點擊及滑動 */
+            background: rgba(241, 245, 249, 0.4); 
+            border: 2px solid rgba(148, 163, 184, 0.5); border-radius: 6px;
+            padding: 8px; pointer-events: auto; 
         }
         
         /* 玩家資訊欄 */
-        .player-info-wrapper { display: flex; align-items: center; gap: 10px; }
-        #hp-bar-bg { width: 100%; height: 14px; background: #cbd5e1; border: 2px solid #475569; margin-bottom: 5px; }
+        .player-info-wrapper { display: flex; align-items: center; gap: 8px; }
+        #hp-bar-bg { width: 100%; height: 10px; background: #cbd5e1; border: 2px solid #475569; margin-bottom: 4px; }
         #ui-hp-fill { height: 100%; background: #22c55e; width: 100%; }
-        .black-text { color: #000000; font-weight: bold; font-size: 14px; line-height: 1.4; }
+        .black-text { color: #000000; font-weight: bold; font-size: 11px; line-height: 1.3; }
         
         /* 怪物計數欄 */
-        .monster-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-        .monster-count { color: #000000; font-weight: bold; font-size: 16px; }
+        .monster-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+        .monster-count { color: #000000; font-weight: bold; font-size: 13px; }
         
         /* 排行榜區域 */
         #leaderboard-box { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        #leaderboard-box h3 { margin: 0 0 10px 0; color: #000; text-align: center; font-size: 16px; }
-        #leaderboard-list { margin: 0; padding-left: 20px; color: #000; font-weight: bold; font-size: 14px; overflow-y: auto; max-height: 350px; }
-        #leaderboard-list li { margin-bottom: 6px; padding: 3px 5px; }
+        #leaderboard-box h3 { margin: 0 0 8px 0; color: #000; text-align: center; font-size: 13px; }
+        #leaderboard-list { margin: 0; padding-left: 20px; color: #000; font-weight: bold; font-size: 11px; overflow-y: auto; max-height: 350px; }
+        #leaderboard-list li { margin-bottom: 4px; padding: 2px 4px; }
 
         /* 提交表單 */
-        #submit-form { display: none; flex-direction: column; align-items: center; gap: 8px; margin-top: 10px; }
-        #submit-form input { width: 90%; padding: 6px; border-radius: 4px; border: 1px solid #ccc; text-align: center; }
-        #submit-form button { background: #3b82f6; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; width: 90%; font-weight: bold; }
+        #submit-form { display: none; flex-direction: column; align-items: center; gap: 6px; margin-top: 8px; }
+        #submit-form input { width: 90%; padding: 4px; border-radius: 4px; border: 1px solid #ccc; text-align: center; font-size: 11px; }
+        #submit-form button { background: #3b82f6; color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer; width: 90%; font-weight: bold; font-size: 11px;}
     </style>
 </head>
 <body>
@@ -64,53 +63,46 @@
     
     <canvas id="gameCanvas"></canvas>
 
-    <!-- 專屬左側 UI 面板 -->
     <div id="ui-container">
-        <!-- 玩家資訊 -->
         <div class="ui-box">
             <div class="player-info-wrapper">
-                <canvas id="player-icon" width="60" height="60"></canvas>
+                <canvas id="player-icon" width="45" height="45"></canvas>
                 <div style="flex:1;">
                     <div id="hp-bar-bg"><div id="ui-hp-fill"></div></div>
                     <div class="black-text" id="ui-hp-text">HP: 100</div>
-                    <div class="black-text" id="ui-wep-name">武裝: Lv.1 基礎手槍</div>
-                    <div class="black-text" id="ui-ammo-text">彈藥: 30 / 30</div>
+                    <div class="black-text" id="ui-wep-name">武裝: Lv.1</div>
+                    <div class="black-text" id="ui-ammo-text">彈藥: 30/30</div>
                 </div>
             </div>
         </div>
 
-        <!-- 魔物目標 -->
         <div class="ui-box">
-            <div style="text-align:center; color:#000; font-weight:bold; margin-bottom:5px;">剩餘魔物目標</div>
-            <div class="monster-row"><canvas id="m-icon-1" width="30" height="30"></canvas><span class="monster-count" id="m-count-1">x 0</span></div>
-            <div class="monster-row"><canvas id="m-icon-2" width="30" height="30"></canvas><span class="monster-count" id="m-count-2">x 0</span></div>
-            <div class="monster-row"><canvas id="m-icon-3" width="30" height="30"></canvas><span class="monster-count" id="m-count-3">x 0</span></div>
-            <div class="monster-row"><canvas id="m-icon-4" width="30" height="30"></canvas><span class="monster-count" id="m-count-4">x 0</span></div>
-            <div class="monster-row"><canvas id="m-icon-5" width="30" height="30"></canvas><span class="monster-count" id="m-count-5">x 0</span></div>
+            <div style="text-align:center; color:#000; font-weight:bold; font-size:12px; margin-bottom:5px;">剩餘魔物目標</div>
+            <div class="monster-row"><canvas id="m-icon-1" width="24" height="24"></canvas><span class="monster-count" id="m-count-1">x 0</span></div>
+            <div class="monster-row"><canvas id="m-icon-2" width="24" height="24"></canvas><span class="monster-count" id="m-count-2">x 0</span></div>
+            <div class="monster-row"><canvas id="m-icon-3" width="24" height="24"></canvas><span class="monster-count" id="m-count-3">x 0</span></div>
+            <div class="monster-row"><canvas id="m-icon-4" width="24" height="24"></canvas><span class="monster-count" id="m-count-4">x 0</span></div>
+            <div class="monster-row"><canvas id="m-icon-5" width="24" height="24"></canvas><span class="monster-count" id="m-count-5">x 0</span></div>
         </div>
 
-        <!-- 即時排行榜 -->
         <div class="ui-box" id="leaderboard-box">
-            <h3>🏆 總排行榜 (全體排名) 🏆</h3>
-            <ol id="leaderboard-list">
-                <li>載入排行榜中...</li>
-            </ol>
+            <h3>🏆 總排行榜 🏆</h3>
+            <ol id="leaderboard-list"><li>載入排行榜中...</li></ol>
             <div id="submit-form">
                 <input type="text" id="lb-class" placeholder="班別 (例: 1A)">
                 <input type="text" id="lb-sid" placeholder="學號 (例: 01)">
                 <input type="text" id="lb-name" placeholder="名字">
-                <button onclick="submitScore()">上傳成績並查看排行榜</button>
+                <button onclick="submitScore()">上傳成績</button>
             </div>
         </div>
     </div>
 
 <script>
     // ==========================================
-    // 🌐 API 後台設定區
+    // 🌐 API 後台設定區 (已合併為同一條 Link)
     // ==========================================
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyhAYaMKRTbD_VyHDe-MZZ5OBZVdsvY2l9qcKWq8TuliBKptbhLpQsHbc4wdyKmX24Cvg/exec"; 
-    // 請填入剛才發佈的 Leaderboard Apps Script 網址
-    const GAS_LEADERBOARD_URL = "https://script.google.com/macros/s/AKfycbz_XXXXXXXXX_YOUR_NEW_LINK_HERE_XXXXXXXXX/exec"; 
+    const GAS_LEADERBOARD_URL = GAS_WEB_APP_URL; 
     
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -124,11 +116,11 @@
         }
     }
 
-    // --- 設定遊戲邊界 (將左側 280px 劃為 UI 專屬區域) ---
-    const UI_BOUND = 280; 
+    // --- 遊戲邊界 (UI 寬度縮減至 200) ---
+    const UI_BOUND = 200; 
 
     // --- 控制系統變數 ---
-    let leftJoyBase = { x: UI_BOUND + 80, y: 120 }; 
+    let leftJoyBase = { x: UI_BOUND + 60, y: 120 }; 
     let leftJoy = { active: false, id: null, stick: {x:0, y:0}, dir: {x:0, y:0} };
     let rightJoy = { active: false, id: null, base: {x:0,y:0}, stick: {x:0,y:0}, dir: {x:0,y:0}, angle: 0 };
     const joyRadius = 50;
@@ -140,8 +132,7 @@
     function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        // 左搖桿避開 UI 區
-        leftJoyBase = { x: UI_BOUND + 80, y: canvas.height - 120 };
+        leftJoyBase = { x: UI_BOUND + 60, y: canvas.height - 100 };
         leftJoy.stick = { x: leftJoyBase.x, y: leftJoyBase.y };
         setupNumpad();
     }
@@ -200,7 +191,6 @@
     function setupNumpad() {
         numpadButtons = [];
         const bw = window.innerWidth > 600 ? 80 : 65; const bh = window.innerWidth > 600 ? 60 : 50; const gap = 10;
-        // 將鍵盤置中於「遊戲區域」而非全螢幕
         const gameCenterX = UI_BOUND + (canvas.width - UI_BOUND) / 2;
         const startX = gameCenterX - (bw*3 + gap*2)/2;
         const startY = canvas.height/2 + 20;
@@ -212,11 +202,12 @@
     }
     resizeCanvas();
 
-    // --- 繪製側邊欄靜態圖示 (迷你 Canvas) ---
+    // --- 繪製側邊欄靜態圖示 (迷你 Canvas 等比例縮小) ---
     function drawHUDIcons() {
-        // Player
+        // Player (Shrunk)
         let pC = document.getElementById('player-icon'); let pCtx = pC.getContext('2d');
-        pCtx.translate(30, 35);
+        pCtx.translate(22.5, 26);
+        pCtx.scale(0.75, 0.75); // 縮小 25%
         pCtx.fillStyle = '#dc2626'; pCtx.beginPath(); pCtx.moveTo(-9, -7); pCtx.lineTo(-15, 15); pCtx.lineTo(15, 15); pCtx.lineTo(9, -7); pCtx.fill();
         pCtx.fillStyle = '#1d4ed8'; pCtx.fillRect(-9, -11, 18, 22); 
         pCtx.fillStyle = '#94a3b8'; pCtx.fillRect(-10, -11, 20, 12); 
@@ -225,11 +216,12 @@
         pCtx.fillStyle = '#b91c1c'; pCtx.fillRect(-2, -36, 4, 9);
         pCtx.fillStyle = '#1e293b'; pCtx.beginPath(); pCtx.arc(-4, -17, 2, 0, Math.PI*2); pCtx.fill(); pCtx.beginPath(); pCtx.arc(4, -17, 2, 0, Math.PI*2); pCtx.fill();
 
-        // Monsters
+        // Monsters (Shrunk)
         let mTypes = [{ tier: 1, color: '#ef4444' }, { tier: 2, color: '#f97316' }, { tier: 3, color: '#eab308' }, { tier: 4, color: '#84cc16' }, { tier: 5, color: '#a855f7' }];
         for (let i=0; i<5; i++) {
             let mC = document.getElementById(`m-icon-${i+1}`); let mCtx = mC.getContext('2d');
-            mCtx.translate(15, 18);
+            mCtx.translate(12, 14);
+            mCtx.scale(0.8, 0.8); // 縮小 20%
             let eSize = 14; 
             mCtx.fillStyle = mTypes[i].color; mCtx.beginPath(); mCtx.arc(0, -eSize*0.4, eSize*0.45, Math.PI, 0); mCtx.lineTo(eSize*0.45, eSize*0.1); mCtx.lineTo(-eSize*0.45, eSize*0.1); mCtx.fill();
             if (mTypes[i].tier === 5) {
@@ -242,9 +234,9 @@
     }
     setTimeout(drawHUDIcons, 100);
 
-    // --- 排行榜邏輯 (Optimistic UI) ---
+    // --- 排行榜邏輯 ---
     function fetchLeaderboard() {
-        if (!GAS_LEADERBOARD_URL || GAS_LEADERBOARD_URL.includes("YOUR_NEW_LINK_HERE")) return;
+        if (!GAS_LEADERBOARD_URL) return;
         fetch(`${GAS_LEADERBOARD_URL}?action=getLeaderboard`)
             .then(res => res.json())
             .then(data => renderLeaderboard(data))
@@ -270,6 +262,8 @@
         const name = document.getElementById('lb-name').value.trim();
         if (!cls || !sid || !name) { alert("請填寫班別、學號及名字！"); return; }
 
+        if (!GAS_LEADERBOARD_URL) return;
+
         scoreSubmitted = true;
         document.getElementById('submit-form').style.display = 'none';
         document.getElementById('leaderboard-list').innerHTML = "<li>上傳中並更新排行榜...</li>";
@@ -280,11 +274,9 @@
         const diff = `Wave ${currentWave}`;
         const score = enemiesKilled;
 
-        // 1. 非同步背景上傳
         const addUrl = `${GAS_LEADERBOARD_URL}?action=addScore&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}&diff=${encodeURIComponent(diff)}&cls=${encodeURIComponent(cls)}&sid=${encodeURIComponent(sid)}&name=${encodeURIComponent(name)}&score=${score}`;
         fetch(addUrl).catch(e => console.log("LB 上傳延遲", e));
 
-        // 2. 即時獲取舊數據並加入新分數 (樂觀更新)
         try {
             let res = await fetch(`${GAS_LEADERBOARD_URL}?action=getLeaderboard`);
             let data = await res.json();
@@ -292,11 +284,9 @@
             data.sort((a, b) => b.score - a.score);
             renderLeaderboard(data);
         } catch(e) {
-            // 若失敗則單獨顯示自己
             renderLeaderboard([{ diff: diff, cls: cls, name: name, score: score, isMe: true }]);
         }
     }
-
 
     // --- 事件處理 ---
     canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
@@ -305,7 +295,7 @@
     canvas.addEventListener('touchcancel', handleTouchEnd, {passive: false});
 
     function handleTouchStart(e) {
-        if(e.target !== canvas) return; // 避免攔截 UI 點擊
+        if(e.target !== canvas) return; 
         e.preventDefault(); initAudio();
         const touches = e.changedTouches;
 
@@ -325,7 +315,6 @@
             }
 
             if (gameState === 'PLAYING') {
-                // 如果點擊喺左邊且大過 UI_BOUND，先視為左搖桿
                 if (tx > UI_BOUND && tx < canvas.width / 2 && !leftJoy.active) {
                     leftJoy.active = true; leftJoy.id = t.identifier;
                     updateFixedJoystick(leftJoy, tx, ty);
@@ -343,7 +332,7 @@
         e.preventDefault(); const touches = e.changedTouches;
         for (let i = 0; i < touches.length; i++) {
             let t = touches[i]; let tx = t.clientX; let ty = t.clientY;
-            if (leftJoy.active && t.identifier === leftJoy.id) updateFixedJoystick(leftJoy, Math.max(UI_BOUND, tx), ty); // 防止搖桿拉入 UI
+            if (leftJoy.active && t.identifier === leftJoy.id) updateFixedJoystick(leftJoy, Math.max(UI_BOUND, tx), ty); 
             if (rightJoy.active && t.identifier === rightJoy.id) {
                 let dx = tx - rightJoy.base.x; let dy = ty - rightJoy.base.y; let dist = Math.sqrt(dx*dx + dy*dy);
                 rightJoy.angle = Math.atan2(dy, dx);
@@ -453,7 +442,6 @@
         if (gameState !== 'PLAYING' || monsterQueue.length === 0) return;
         let mData = monsterQueue.shift(); totalMonstersSpawned++;
         
-        // 敵人必定喺 UI_BOUND 之外生成
         let x = Math.random() < 0.5 ? UI_BOUND + 10 : canvas.width + 50;
         let y = Math.random() * canvas.height;
 
@@ -558,7 +546,7 @@
         document.getElementById('ui-wep-name').textContent = `武裝: ${WEAPONS[player.weaponLevel].name}`;
         
         if (player.isReloading) document.getElementById('ui-ammo-text').textContent = `換彈中...`;
-        else document.getElementById('ui-ammo-text').textContent = `彈藥: ${player.currentMagazine} / ${player.totalAmmo}`;
+        else document.getElementById('ui-ammo-text').textContent = `彈藥: ${player.currentMagazine}/${player.totalAmmo}`;
 
         for(let i=1; i<=5; i++) {
             let el = document.getElementById(`m-count-${i}`);
@@ -624,7 +612,6 @@
             let len = Math.sqrt(dx*dx + dy*dy); dx = (dx / len) * safeSpeed; dy = (dy / len) * safeSpeed; 
         }
         
-        // 玩家 X 軸限制 (絕對不能進入 UI 區)
         if (!isNaN(dx) && !isNaN(dy)) { player.x += dx; player.y += dy; }
         player.x = Math.max(UI_BOUND + player.radius, Math.min(canvas.width - player.radius, player.x));
         player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
@@ -732,7 +719,7 @@
         }
     }
 
-    // --- 渲染系統 (偽 2.5D 美術) ---
+    // --- 渲染系統 ---
     function draw() {
         ctx.fillStyle = '#d2b48c'; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -927,7 +914,7 @@
             ctx.fillText('或按 [Enter] 重新挑戰', gameCenterX, canvas.height/2 + 100); ctx.globalAlpha = 1.0;
         }
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'right'; ctx.fillText('V28', canvas.width - 20, canvas.height - 20);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'right'; ctx.fillText('V30', canvas.width - 20, canvas.height - 20);
     }
 
     async function loadGameData() {
