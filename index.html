@@ -62,7 +62,7 @@
 
         /* --- 放大與重新排版的 UI --- */
         #ui-container {
-            position: absolute; top: 10px; left: 10px; bottom: 10px; width: 200px; 
+            position: absolute; top: 10px; left: 10px; bottom: 25px; width: 200px; 
             display: flex; flex-direction: column; gap: 12px; z-index: 10; pointer-events: none;
         }
         .ui-box { background: rgba(241, 245, 249, 0.45); border: 2px solid rgba(148, 163, 184, 0.6); border-radius: 8px; padding: 10px; pointer-events: auto; }
@@ -87,11 +87,11 @@
         #submit-form button { background: #3b82f6; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; width: 90%; font-weight: bold; font-size: 13px;}
         #submit-form .skip-btn { background: #64748b; margin-top: 2px; }
 
-        /* 版本號標籤 */
+        /* 版本號標籤 - 移至左下角 */
         #version-tag {
-            position: absolute; bottom: 10px; right: 15px; color: rgba(255,255,255,0.7);
-            font-size: 14px; font-weight: bold; z-index: 20; pointer-events: none;
-            text-shadow: 1px 1px 2px black;
+            position: absolute; bottom: 5px; left: 10px; color: rgba(0, 0, 0, 0.7);
+            font-size: 12px; font-weight: bold; z-index: 100; pointer-events: none;
+            text-shadow: 0.5px 0.5px 1px rgba(255,255,255,0.5);
         }
     </style>
 </head>
@@ -158,7 +158,7 @@
         </div>
     </div>
     
-    <div id="version-tag">Ver 1.2.0</div>
+    <div id="version-tag">Math Survival Ver 1.2.0</div>
 
 <script>
 // ==============================================================================
