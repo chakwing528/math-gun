@@ -24,9 +24,9 @@ const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyhAYaMKRTbD_Vy
 const GAS_LEADERBOARD_URL = GAS_WEB_APP_URL; 
 
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas ? canvas.getContext('2d') : null;
 
-// --- 修正：BGM 播放防阻擋機制 ---
+// --- BGM 播放防阻擋機制 ---
 let audioInitialized = false;
 function initAudio() {
     if (!audioInitialized) {
@@ -56,18 +56,21 @@ let rightJoy = { active: false, id: null, base: {x:0,y:0}, stick: {x:0,y:0}, dir
 const joyRadius = 50;
 
 const keys = { w: false, a: false, s: false, d: false };
-let mouseX = canvas.width / 2; let mouseY = canvas.height / 2;
+let mouseX = window.innerWidth / 2; 
+let mouseY = window.innerHeight / 2;
 let isShooting = false;
 
 // 視窗縮放機制
 function resizeCanvas() {
+    if (!canvas) return;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     leftJoyBase = { x: UI_BOUND + 60, y: canvas.height - 100 };
     leftJoy.stick = { x: leftJoyBase.x, y: leftJoyBase.y };
+    if (typeof setupNumpad === 'function') setupNumpad(); // 若 ui.js 已載入，同步更新虛擬鍵盤
 }
 window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+if (canvas) resizeCanvas();
 
 // --- 全域遊戲狀態 ---
 let gameState = 'START_MENU'; 
@@ -113,6 +116,20 @@ let player = {
 
 let bullets = []; let enemies = []; let lootBoxes = []; let ammoBoxes = []; let particles = []; let floatingTexts = [];
 
-// DOM 快取優化
+// 🚀 DOM 快取優化
 const uiElements = {};
 let uiReady = false;
+
+// --- 網頁失去焦點時自動靜音背景音樂 ---
+document.addEventListener('visibilitychange', () => {
+    let bgm = document.getElementById('bgm');
+    if (!bgm) return;
+    if (document.hidden) {
+        bgm.pause();
+    } else {
+        // 如果音樂已初始化且處於遊戲狀態中，則恢復播放
+        if (audioInitialized && (gameState === 'PLAYING' || gameState === 'START_MENU' || gameState === 'MATH_TIME')) {
+            bgm.play().catch(e => console.log("BGM 恢復播放攔截", e));
+        }
+    }
+});
