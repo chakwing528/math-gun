@@ -61,23 +61,36 @@ function generateIndicesQuestions(num, levelPref) {
         if (levelType === '1') {
             qObj.level = "⭐ 程度 1";
             const v = singleVars[getRandomInt(0, singleVars.length)];
-            let a = getRandomExp(), b = getRandomExp(), type = getRandomInt(0, 3); 
+            
+            // 🌟 修正程度一：確保 a 和 b 都是正指數 (大於等於 2)
+            let a = getRandomInt(2, 7); 
+            let b = getRandomInt(2, 7); 
+            let type = getRandomInt(0, 3); 
             let options = [];
+            
+            // 🌟 如果是除法 (type 2)，確保 a > b，以免減出來變成負指數或 0
+            if (type === 2) {
+                if (a < b) { let temp = a; a = b; b = temp; }
+                else if (a === b) { a += 1; }
+            }
             
             if (type === 0) {
                 questionMathStr = `(${v}^{${a}})^{${b}}`;
                 let correct = a * b;
                 let eqCorrect = buildEq([
                     { text: `(${v}^{${a}})^{${b}}`, hide: false },
-                    { text: `${v}^{${a} \\times ${safeNeg(b)}}`, hide: true },
+                    { text: `${v}^{${a} \\times ${b}}`, hide: true }, // 皆為正數，不再需要 safeNeg
                     { text: `${v}^{${correct}}`, hide: false },
                     { text: formatFinalMath(v, correct), hide: false }
                 ]);
-                let eqWrong = buildEq([{ text: `(${v}^{${a}})^{${b}}`, hide: false }, { text: `${v}^{${a} \\times ${safeNeg(b)}}`, hide: true }, { text: `${v}^{?}`, hide: false }]);
+                let eqWrong = buildEq([{ text: `(${v}^{${a}})^{${b}}`, hide: false }, { text: `${v}^{${a} \\times ${b}}`, hide: true }, { text: `${v}^{?}`, hide: false }]);
                 
                 options.push({ text: formatFinal(v, correct), isCorrect: true, hint: wrapHint(msgCorrect, eqCorrect) });
-                [a+b, a-b, b-a].forEach((w, idx) => {
-                    let uniqueW = w; while(uniqueW === correct || options.some(opt => opt.w === uniqueW)) uniqueW += (idx+1);
+                
+                // 產生正指數錯誤選項
+                [a+b, Math.max(1, Math.abs(a-b)), a*b+1].forEach((w) => {
+                    let uniqueW = Math.max(1, w); // 確保不小於 1
+                    while(uniqueW === correct || options.some(opt => opt.w === uniqueW)) uniqueW += 1;
                     options.push({ text: formatFinal(v, uniqueW), w: uniqueW, isCorrect: false, hint: wrapHint(msgInd1, eqWrong) });
                 });
             } else if (type === 1) {
@@ -85,15 +98,17 @@ function generateIndicesQuestions(num, levelPref) {
                 let correct = a + b;
                 let eqCorrect = buildEq([
                     { text: `${v}^{${a}} \\times ${v}^{${b}}`, hide: false },
-                    { text: `${v}^{${a} + ${safeNeg(b)}}`, hide: true },
+                    { text: `${v}^{${a} + ${b}}`, hide: true },
                     { text: `${v}^{${correct}}`, hide: false },
                     { text: formatFinalMath(v, correct), hide: false }
                 ]);
-                let eqWrong = buildEq([{ text: `${v}^{${a}} \\times ${v}^{${b}}`, hide: false }, { text: `${v}^{${a} + ${safeNeg(b)}}`, hide: true }, { text: `${v}^{?}`, hide: false }]);
+                let eqWrong = buildEq([{ text: `${v}^{${a}} \\times ${v}^{${b}}`, hide: false }, { text: `${v}^{${a} + ${b}}`, hide: true }, { text: `${v}^{?}`, hide: false }]);
                 
                 options.push({ text: formatFinal(v, correct), isCorrect: true, hint: wrapHint(msgCorrect, eqCorrect) });
-                [a*b, a-b, b-a].forEach((w, idx) => {
-                    let uniqueW = w; while(uniqueW === correct || options.some(opt => opt.w === uniqueW)) uniqueW += (idx+1);
+                
+                [a*b, Math.max(1, Math.abs(a-b)), a+b+1].forEach((w) => {
+                    let uniqueW = Math.max(1, w);
+                    while(uniqueW === correct || options.some(opt => opt.w === uniqueW)) uniqueW += 1;
                     options.push({ text: formatFinal(v, uniqueW), w: uniqueW, isCorrect: false, hint: wrapHint(msgInd2, eqWrong) });
                 });
             } else {
@@ -101,15 +116,17 @@ function generateIndicesQuestions(num, levelPref) {
                 let correct = a - b;
                 let eqCorrect = buildEq([
                     { text: `\\frac{${v}^{${a}}}{${v}^{${b}}}`, hide: false },
-                    { text: `\\frac{${v}^{${a} - ${safeNeg(b)}}}{1}`, hide: true },
+                    { text: `\\frac{${v}^{${a} - ${b}}}{1}`, hide: true },
                     { text: `\\frac{${v}^{${correct}}}{1}`, hide: false },
                     { text: formatFinalMath(v, correct), hide: false }
                 ]);
-                let eqWrong = buildEq([{ text: `\\frac{${v}^{${a}}}{${v}^{${b}}}`, hide: false }, { text: `\\frac{${v}^{${a} - ${safeNeg(b)}}}{1}`, hide: true }, { text: `\\frac{${v}^{?}}{1}`, hide: false }]);
+                let eqWrong = buildEq([{ text: `\\frac{${v}^{${a}}}{${v}^{${b}}}`, hide: false }, { text: `\\frac{${v}^{${a} - ${b}}}{1}`, hide: true }, { text: `\\frac{${v}^{?}}{1}`, hide: false }]);
                 
                 options.push({ text: formatFinal(v, correct), isCorrect: true, hint: wrapHint(msgCorrect, eqCorrect) });
-                [a*b, a+b, b-a].forEach((w, idx) => {
-                    let uniqueW = w; while(uniqueW === correct || options.some(opt => opt.w === uniqueW)) uniqueW += (idx+1);
+                
+                [a*b, a+b, a-b+1].forEach((w) => {
+                    let uniqueW = Math.max(1, w);
+                    while(uniqueW === correct || options.some(opt => opt.w === uniqueW)) uniqueW += 1;
                     options.push({ text: formatFinal(v, uniqueW), w: uniqueW, isCorrect: false, hint: wrapHint(msgInd3, eqWrong) });
                 });
             }
