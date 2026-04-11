@@ -13,11 +13,11 @@
 </head>
 <body>
 
-    <!-- 2. 正確指向 audio 資料夾內的音效檔 -->
-    <audio id="bgm" src="audio/bgm.mp3" loop></audio>
-    <audio id="shootSfx" src="audio/shootSfx.m4a"></audio>
-    <audio id="reloadSfx" src="audio/reloadSfx.m4a"></audio>
-    <audio id="emptyAmmoSfx" src="audio/emptyAmmoSfx.m4a"></audio>
+    <!-- 2. 正確指向 audio 資料夾內的音效檔，加入 preload="auto" 加快載入 -->
+    <audio id="bgm" src="audio/bgm.mp3" loop preload="auto"></audio>
+    <audio id="shootSfx" src="audio/shootSfx.m4a" preload="auto"></audio>
+    <audio id="reloadSfx" src="audio/reloadSfx.m4a" preload="auto"></audio>
+    <audio id="emptyAmmoSfx" src="audio/emptyAmmoSfx.m4a" preload="auto"></audio>
 
     <!-- 載入中畫面 -->
     <div id="loading-screen">連接伺服器並載入數據中...</div>
@@ -25,9 +25,10 @@
     <!-- 難度選擇選單 -->
     <div id="start-menu">
         <h1 style="color: #fbbf24; font-size: 40px; margin-bottom: 30px; text-shadow: 2px 2px 4px #000; text-align: center;">請選擇目標等級</h1>
-        <button class="diff-btn" onclick="window.startGame('S1')">S1 程度</button>
-        <button class="diff-btn" onclick="window.startGame('S2')">S2 程度</button>
-        <button class="diff-btn" onclick="window.startGame('S3')">S3 程度</button>
+        <!-- 加入 initAudio() 確保一點擊就觸發背景音樂 -->
+        <button class="diff-btn" onclick="initAudio(); window.startGame('S1')">S1 程度</button>
+        <button class="diff-btn" onclick="initAudio(); window.startGame('S2')">S2 程度</button>
+        <button class="diff-btn" onclick="initAudio(); window.startGame('S3')">S3 程度</button>
     </div>
 
     <!-- MCQ 答題彈出視窗 -->
@@ -81,7 +82,7 @@
 
     <!-- 3. 正確指向 js 資料夾內的腳本 (順序極度重要，請確保在 </body> 之前) -->
     <!-- 假設你已經將 indices.js 也放進了 js 資料夾內。如果沒有，請改為 src="indices.js" -->
-    <script src="js/indices.js"></script> 
+    <script src="js/topics/indices.js"></script> 
     <script src="js/config.js"></script>  
     <script src="js/ui.js"></script>      
     <script src="js/engine.js"></script>  
