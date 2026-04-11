@@ -3,30 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Math Survival - V42</title>
+    <title>Math Survival - Optimized & Modular</title>
     
-    <!-- 指向你整理好的 CSS 檔案 -->
-    <link rel="stylesheet" href="css/style.css">
+    <!-- 引入 MathJax 處理 LaTeX 數學排版 -->
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- ⬇️ 實際在 GitHub 上，請保留這行引入 indices.js ⬇️ -->
+    <!-- <script src="indices.js"></script> -->
+
+    <style>
+        body {
+            margin: 0; padding: 0; overflow: hidden;
+            background-color: #0f172a; color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none; -webkit-user-select: none; touch-action: none;
+        }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        #loading-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #1e293b; display: flex; justify-content: center; align-items: center;
+            color: #fbbf24; font-size: 32px; font-weight: bold; z-index: 1000;
+        }
+
+        #start-menu {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(15, 23, 42, 0.95); display: none; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 500; gap: 20px;
+        }
+        .diff-btn {
+            background: #3b82f6; color: white; border: 2px solid #94a3b8; padding: 15px 40px;
+            font-size: 24px; font-weight: bold; border-radius: 10px; cursor: pointer; width: 250px;
+            transition: background 0.2s;
+        }
+        .diff-btn:hover { background: #2563eb; }
+
+        #math-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 600; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .math-container {
+            background: #1e293b; padding: 30px; border-radius: 12px;
+            border: 4px solid #38bdf8; width: 85%; max-width: 600px; max-height: 90%; overflow-y: auto;
+            text-align: center; color: white; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        #math-timer-bg { width: 100%; height: 12px; background: #334155; margin-bottom: 20px; border-radius: 6px; overflow: hidden;}
+        #math-timer-bar { height: 100%; background: #4ade80; width: 100%; transition: width 0.1s linear, background-color 0.3s; }
+        #math-question-content { font-size: 20px; margin-bottom: 25px; overflow-x: auto; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;}
+        .mcq-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .mcq-btn {
+            background: #334155; border: 2px solid #64748b; padding: 15px;
+            border-radius: 8px; color: white; font-size: 20px; cursor: pointer;
+            transition: 0.2s; display: flex; align-items: center; justify-content: flex-start; gap: 15px;
+        }
+        .mcq-btn:hover { background: #475569; border-color: #fbbf24; }
+        .mcq-label { color: #fbbf24; font-weight: bold; font-size: 24px; }
+
+        #ui-container {
+            position: absolute; top: 10px; left: 10px; bottom: 10px; width: 180px; 
+            display: flex; flex-direction: column; gap: 8px; z-index: 10; pointer-events: none;
+        }
+        .ui-box { background: rgba(241, 245, 249, 0.4); border: 2px solid rgba(148, 163, 184, 0.5); border-radius: 6px; padding: 8px; pointer-events: auto; }
+        .player-info-wrapper { display: flex; align-items: center; gap: 8px; }
+        #hp-bar-bg { width: 100%; height: 10px; background: #cbd5e1; border: 2px solid #475569; margin-bottom: 4px; }
+        #ui-hp-fill { height: 100%; background: #22c55e; width: 100%; }
+        .black-text { color: #000000; font-weight: bold; font-size: 11px; line-height: 1.3; }
+        .monster-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+        .monster-count { color: #000000; font-weight: bold; font-size: 13px; }
+        
+        /* 修正排行榜排版，防止超出邊框與換行 */
+        #leaderboard-box { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        #leaderboard-box h3 { margin: 0 0 8px 0; color: #000; text-align: center; font-size: 13px; }
+        #leaderboard-list { 
+            margin: 0; padding: 0; padding-left: 5px; list-style-position: inside;
+            color: #000; font-weight: bold; font-size: 11px; 
+            overflow-y: auto; max-height: 100%; /* 確保自適應高度 */
+        }
+        #leaderboard-list li { 
+            margin-bottom: 4px; padding: 2px; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* 文字過長會變成 ... */
+        }
+        
+        #submit-form { display: none; flex-direction: column; align-items: center; gap: 6px; margin-top: 8px; }
+        #submit-form input { width: 90%; padding: 4px; border-radius: 4px; border: 1px solid #ccc; text-align: center; font-size: 11px; }
+        #submit-form button { background: #3b82f6; color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer; width: 90%; font-weight: bold; font-size: 11px;}
+    </style>
 </head>
 <body>
 
-    <!-- 外部題庫 -->
-    <script src="js/topics/indices.js"></script>
+    <audio id="bgm" src="bgm.mp3" loop></audio>
+    <audio id="shootSfx" src="shootSfx.m4a"></audio>
+    <audio id="reloadSfx" src="reloadSfx.m4a"></audio>
+    <audio id="emptyAmmoSfx" src="emptyAmmoSfx.m4a"></audio>
 
-    <!-- 音效資源 -->
-    <audio id="bgm" src="audio/bgm.mp3" loop preload="auto"></audio>
-    <audio id="shootSfx" src="audio/shootsSfx.m4a" preload="auto"></audio>
-    <audio id="reloadSfx" src="audio/reloadSfx.m4a" preload="auto"></audio>
-    <audio id="emptyAmmoSfx" src="audio/emptyAmmoSfx.m4a" preload="auto"></audio>
-
-    <div id="loading-screen">系統初始化中...</div>
+    <div id="loading-screen">連接伺服器並載入數據中...</div>
     
-    <div id="start-menu" style="display: none;">
+    <div id="start-menu">
         <h1 style="color: #fbbf24; font-size: 40px; margin-bottom: 30px; text-shadow: 2px 2px 4px #000; text-align: center;">請選擇目標等級</h1>
-        <button class="diff-btn" onclick="safeStart('S1')">S1 程度</button>
-        <button class="diff-btn" onclick="safeStart('S2')">S2 程度</button>
-        <button class="diff-btn" onclick="safeStart('S3')">S3 程度</button>
+        <button class="diff-btn" onclick="window.startGame('S1')">S1 程度</button>
+        <button class="diff-btn" onclick="window.startGame('S2')">S2 程度</button>
+        <button class="diff-btn" onclick="window.startGame('S3')">S3 程度</button>
     </div>
 
     <div id="math-overlay">
@@ -64,111 +141,27 @@
 
         <div class="ui-box" id="leaderboard-box">
             <h3>🏆 總排行榜 🏆</h3>
-            <ol id="leaderboard-list"><li>載入中...</li></ol>
+            <ol id="leaderboard-list"><li>載入排行榜中...</li></ol>
             <div id="submit-form">
-                <input type="text" id="lb-class" placeholder="班別">
-                <input type="text" id="lb-sid" placeholder="學號">
+                <input type="text" id="lb-class" placeholder="班別 (例: 1A)">
+                <input type="text" id="lb-sid" placeholder="學號 (例: 01)">
                 <input type="text" id="lb-name" placeholder="名字">
-                <div style="display: flex; gap: 5px; width: 90%; justify-content: center; margin-top: 5px;">
-                    <button onclick="submitScore()" style="flex: 1;">上傳</button>
-                    <button onclick="showStartMenu()" style="flex: 1; background: #64748b;">重玩</button>
-                </div>
+                <button onclick="window.submitScore()">上傳成績</button>
             </div>
         </div>
-
-        <div style="color: rgba(255, 255, 255, 0.5); font-weight: bold; font-size: 14px; margin-top: auto; padding-left: 5px;">V42</div>
     </div>
 
 <script>
-// ============================================================================
-// 🎮 V42 終極穩定版 (連線修復 & 畫風還原)
-// ============================================================================
+// ==============================================================================
+// 📁 FILE 1: config.js (請將以下代碼複製到你的 config.js)
+// ==============================================================================
 
-// 🌐 API 設定
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyhAYaMKRTbD_VyHDe-MZZ5OBZVdsvY2l9qcKWq8TuliBKptbhLpQsHbc4wdyKmX24Cvg/exec"; 
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-// --- 系統變數 ---
-let gameState = 'START_MENU'; 
-let globalTime = 0; let shakeTime = 0; let bossAlarmTimer = 0;
-let mathTimer = 0; let currentMathType = ''; let scoreSubmitted = false;
-let currentDifficulty = 'S1';
-let questionBank = [];
-let audioInitialized = false;
-
-const UI_BOUND = 200; 
-let leftJoyBase = { x: UI_BOUND + 60, y: 120 }; 
-let leftJoy = { active: false, id: null, stick: {x:0, y:0}, dir: {x:0, y:0} };
-let rightJoy = { active: false, id: null, base: {x:0,y:0}, stick: {x:0,y:0}, dir: {x:0,y:0}, angle: 0 };
-const joyRadius = 50;
-
-const keys = { w: false, a: false, s: false, d: false };
-let mouseX = window.innerWidth / 2; let mouseY = window.innerHeight / 2;
-let isShooting = false;
-
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    leftJoyBase = { x: UI_BOUND + 60, y: canvas.height - 100 };
-    leftJoy.stick = { x: leftJoyBase.x, y: leftJoyBase.y };
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-// --- 數據結構 ---
-let enemiesKilled = 0; let totalMonstersSpawned = 0; let TOTAL_MONSTERS = 19; 
-let monstersLeft = [0, 0, 0, 0, 0, 0]; 
-let lootBoxSpawnInterval = 480; let ammoBoxSpawnInterval = 180; 
-
-let MONSTER_BASE = [
-    {tier: 1, name: "木乃伊兵", count: 6, hp: 5, speed: 0.5, size: 26, color: '#ef4444'},
-    {tier: 2, name: "狂暴木乃伊", count: 5, hp: 50, speed: 1.0, size: 30, color: '#f97316'},
-    {tier: 3, name: "沙漠石魔", count: 5, hp: 100, speed: 2.0, size: 40, color: '#eab308'},
-    {tier: 4, name: "劇毒巨妖", count: 3, hp: 200, speed: 3.0, size: 50, color: '#84cc16'},
-    {tier: 5, name: "深淵領主 (Boss)", count: 1, hp: 500, speed: 4.0, size: 80, color: '#a855f7'}
-];
-
-const WEAPONS = [
-    { level: 1, name: "Lv.1 基礎手槍", damage: 1, bullets: 1, fireRate: 15, playerSpeed: 4, reloadAmmo: 30, magCapacity: 30, ammoBoxRefill: 30, color: '#fde047', glow: '#ca8a04', recoil: 4, speed: 12 },
-    { level: 2, name: "Lv.2 雙發衝鋒", damage: 1, bullets: 1, fireRate: 12, playerSpeed: 5, reloadAmmo: 30, magCapacity: 30, ammoBoxRefill: 30, color: '#60a5fa', glow: '#2563eb', recoil: 5, speed: 14 },
-    { level: 3, name: "Lv.3 散彈速射", damage: 1, bullets: 2, fireRate: 8, playerSpeed: 6, reloadAmmo: 40, magCapacity: 30, ammoBoxRefill: 40, color: '#34d399', glow: '#059669', recoil: 6, speed: 16 },
-    { level: 4, name: "Lv.4 脈衝步槍", damage: 2, bullets: 2, fireRate: 8, playerSpeed: 7, reloadAmmo: 40, magCapacity: 30, ammoBoxRefill: 40, color: '#f472b6', glow: '#db2777', recoil: 7, speed: 18 },
-    { level: 5, name: "Lv.5 穿甲重砲", damage: 2, bullets: 3, fireRate: 6, playerSpeed: 8, reloadAmmo: 50, magCapacity: 30, ammoBoxRefill: 50, color: '#a78bfa', glow: '#7c3aed', recoil: 8, speed: 20, penetrate: true },
-    { level: 6, name: "Lv.6 散射激光", damage: 3, bullets: 3, fireRate: 6, playerSpeed: 9, reloadAmmo: 50, magCapacity: 30, ammoBoxRefill: 50, color: '#fb923c', glow: '#ea580c', recoil: 10, speed: 22 },
-    { level: 7, name: "Lv.7 電漿風暴", damage: 3, bullets: 4, fireRate: 2, playerSpeed: 10, reloadAmmo: 60, magCapacity: 30, ammoBoxRefill: 60, color: '#38bdf8', glow: '#0284c7', recoil: 12, speed: 25, penetrate: true },
-    { level: 8, name: "Lv.8 終極殲滅", damage: 4, bullets: 4, fireRate: 2, playerSpeed: 10, reloadAmmo: 60, magCapacity: 30, ammoBoxRefill: 60, color: '#ffffff', glow: '#fef08a', recoil: 14, speed: 28, penetrate: true },
-    { level: 9, name: "Lv.MAX 神話武器", damage: 5, bullets: 5, fireRate: 1, playerSpeed: 10, reloadAmmo: 100, magCapacity: 30, ammoBoxRefill: 100, color: '#ef4444', glow: '#b91c1c', recoil: 16, speed: 30, penetrate: true }
-];
-
-let player = {
-    x: UI_BOUND + 100, y: window.innerHeight/2, radius: 20, color: '#3b82f6', speed: 4, hp: 100, maxHp: 100,
-    weaponLevel: -1, currentMagazine: 0, totalAmmo: 0,       
-    isReloading: false, reloadTimer: 0, angle: 0, recoilOffset: 0, lastFireTime: 0, isMoving: false
-};
-
-let bullets = []; let enemies = []; let lootBoxes = []; let ammoBoxes = []; let particles = []; let floatingTexts = []; let monsterQueue = [];
-
-// ==========================================
-// 🛠️ 輔助與 UI 功能
-// ==========================================
-
-function initAudio() {
-    if (!audioInitialized) {
-        let bgm = document.getElementById('bgm');
-        if(bgm) { bgm.volume = 0.4; bgm.play().catch(()=>{}); }
-        audioInitialized = true;
-    }
-}
-
-document.addEventListener('visibilitychange', () => {
-    let bgm = document.getElementById('bgm');
-    if (!bgm) return;
-    if (document.hidden) bgm.pause();
-    else if (audioInitialized && (gameState === 'PLAYING' || gameState === 'START_MENU')) bgm.play().catch(()=>{});
-});
-
+// --- 題庫輔助函數 (供備用題庫使用) ---
 function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min)) + min; }
+function getRandomExp() { let e = getRandomInt(-5, 6); return e === 0 ? 2 : e; }
+function buildEq(steps) { return steps.map(s => s.text).join(" = "); }
+function wrapHint(msg, eq) { return `${msg}<br>\\( \\displaystyle ${eq} \\)`; }
+const msgCorrect = "<span style='color:green'>正確！</span>";
 function shuffleArray(array) { 
     let arr = [...array];
     for (let i = arr.length - 1; i > 0; i--) { 
@@ -178,25 +171,146 @@ function shuffleArray(array) {
     return arr; 
 }
 
-function updateHTMLHUD() {
-    let hpFill = document.getElementById('ui-hp-fill');
-    if (!hpFill) return; 
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyhAYaMKRTbD_VyHDe-MZZ5OBZVdsvY2l9qcKWq8TuliBKptbhLpQsHbc4wdyKmX24Cvg/exec"; 
+const GAS_LEADERBOARD_URL = GAS_WEB_APP_URL; 
 
-    hpFill.style.width = (Math.max(0, player.hp) / player.maxHp * 100) + '%';
-    document.getElementById('ui-hp-text').textContent = `HP: ${Math.max(0, player.hp)}`;
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let audioInitialized = false;
+function initAudio() {
+    if (!audioInitialized) {
+        let bgm = document.getElementById('bgm');
+        if(bgm) { bgm.volume = 0.4; bgm.play().catch(e=>{}); }
+        audioInitialized = true;
+    }
+}
+
+const UI_BOUND = 200; 
+
+// --- 控制系統變數 ---
+let leftJoyBase = { x: UI_BOUND + 60, y: 120 }; 
+let leftJoy = { active: false, id: null, stick: {x:0, y:0}, dir: {x:0, y:0} };
+let rightJoy = { active: false, id: null, base: {x:0,y:0}, stick: {x:0,y:0}, dir: {x:0,y:0}, angle: 0 };
+const joyRadius = 50;
+
+const keys = { w: false, a: false, s: false, d: false };
+let mouseX = canvas.width / 2; let mouseY = canvas.height / 2;
+let isShooting = false;
+
+// 視窗縮放
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    leftJoyBase = { x: UI_BOUND + 60, y: canvas.height - 100 };
+    leftJoy.stick = { x: leftJoyBase.x, y: leftJoyBase.y };
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// 全域狀態
+let gameState = 'START_MENU'; 
+let globalTime = 0; let shakeTime = 0; let bossAlarmTimer = 0;
+let currentDifficulty = 'S1';
+let questionBank = [];
+let currentMathType = ''; 
+let mathTimer = 0;
+let scoreSubmitted = false;
+
+// 進度與實體陣列
+let enemiesKilled = 0; let totalMonstersSpawned = 0; let TOTAL_MONSTERS = 19; 
+let monstersLeft = [0, 0, 0, 0, 0, 0]; 
+let currentWave = 1;
+let lootBoxSpawnInterval = 480; let ammoBoxSpawnInterval = 180; 
+
+let MONSTER_BASE = [
+    {tier: 1, name: "一級怪物", count: 5, hp: 8, speed: 0.5, size: 22, color: '#ef4444'},
+    {tier: 2, name: "二級怪物", count: 5, hp: 25, speed: 0.8, size: 28, color: '#f97316'},
+    {tier: 3, name: "三級怪物", count: 5, hp: 200, speed: 1.0, size: 35, color: '#eab308'},
+    {tier: 4, name: "四級怪物", count: 3, hp: 500, speed: 1.2, size: 45, color: '#84cc16'},
+    {tier: 5, name: "五級首領", count: 1, hp: 1500, speed: 1.5, size: 70, color: '#a855f7'}
+];
+
+const WEAPONS = [
+    { level: 1, name: "Lv.1 基礎手槍", damage: 1, bullets: 1, fireRate: 15, playerSpeed: 4, reloadAmmo: 30, magCapacity: 30, ammoBoxRefill: 30, color: '#fde047', glow: '#ca8a04', recoil: 4, speed: 12 },
+    { level: 2, name: "Lv.2 雙發衝鋒", damage: 1.5, bullets: 2, fireRate: 12, playerSpeed: 5, reloadAmmo: 30, magCapacity: 30, ammoBoxRefill: 30, color: '#60a5fa', glow: '#2563eb', recoil: 5, speed: 14 },
+    { level: 3, name: "Lv.3 散彈速射", damage: 2.25, bullets: 3, fireRate: 10, playerSpeed: 6, reloadAmmo: 40, magCapacity: 30, ammoBoxRefill: 30, color: '#34d399', glow: '#059669', recoil: 6, speed: 16 },
+    { level: 4, name: "Lv.4 脈衝步槍", damage: 3.4, bullets: 4, fireRate: 8, playerSpeed: 7, reloadAmmo: 40, magCapacity: 30, ammoBoxRefill: 30, color: '#f472b6', glow: '#db2777', recoil: 7, speed: 18 },
+    { level: 5, name: "Lv.5 穿甲重砲", damage: 5.1, bullets: 1, fireRate: 6, playerSpeed: 8, reloadAmmo: 50, magCapacity: 30, ammoBoxRefill: 30, color: '#a78bfa', glow: '#7c3aed', recoil: 8, speed: 20, penetrate: true },
+    { level: 6, name: "Lv.6 散射激光", damage: 7.6, bullets: 5, fireRate: 4, playerSpeed: 9, reloadAmmo: 50, magCapacity: 30, ammoBoxRefill: 30, color: '#fb923c', glow: '#ea580c', recoil: 10, speed: 22 },
+    { level: 7, name: "Lv.7 電漿風暴", damage: 11.4, bullets: 3, fireRate: 3, playerSpeed: 10, reloadAmmo: 60, magCapacity: 30, ammoBoxRefill: 30, color: '#38bdf8', glow: '#0284c7', recoil: 12, speed: 25, penetrate: true },
+    { level: 8, name: "Lv.8 終極殲滅射線", damage: 17.1, bullets: 7, fireRate: 2, playerSpeed: 10, reloadAmmo: 60, magCapacity: 30, ammoBoxRefill: 30, color: '#ffffff', glow: '#fef08a', recoil: 14, speed: 28, penetrate: true },
+    { level: 9, name: "Lv.MAX 神話武器", damage: 25.6, bullets: 9, fireRate: 1, playerSpeed: 10, reloadAmmo: 100, magCapacity: 30, ammoBoxRefill: 30, color: '#ef4444', glow: '#b91c1c', recoil: 16, speed: 30, penetrate: true }
+];
+
+let player = {
+    x: UI_BOUND + 100, y: 0, radius: 20, color: '#3b82f6', speed: 4, hp: 100, maxHp: 100,
+    weaponLevel: -1, currentMagazine: 0, totalAmmo: 0,       
+    isReloading: false, reloadTimer: 0, angle: 0, recoilOffset: 0, lastFireTime: 0, isMoving: false
+};
+
+let bullets = []; let enemies = []; let lootBoxes = []; let ammoBoxes = []; let particles = []; let floatingTexts = [];
+
+// 🚀 DOM 快取優化
+const uiElements = {};
+let uiReady = false;
+
+// === FILE 1 END ===
+
+
+// ==============================================================================
+// 📁 FILE 2: ui.js (請將以下代碼複製到你的 ui.js)
+// ==============================================================================
+
+function cacheUIElements() {
+    uiElements.hpFill = document.getElementById('ui-hp-fill');
+    uiElements.hpText = document.getElementById('ui-hp-text');
+    uiElements.wepName = document.getElementById('ui-wep-name');
+    uiElements.ammoText = document.getElementById('ui-ammo-text');
+    uiElements.mathTimerBar = document.getElementById('math-timer-bar');
+    uiElements.mCounts = [];
+    for(let i=1; i<=5; i++) uiElements.mCounts[i] = document.getElementById(`m-count-${i}`);
+    uiReady = true;
+}
+
+let lastHUDState = { hp: -1, weapon: -2, ammo: -1, total: -1, reloading: null, mCounts: [-1,-1,-1,-1,-1,-1] };
+
+function updateHTMLHUD() {
+    if (!uiReady) cacheUIElements();
+    if (!uiElements.hpFill) return; 
+
+    if (lastHUDState.hp !== player.hp) {
+        uiElements.hpFill.style.width = (Math.max(0, player.hp) / player.maxHp * 100) + '%';
+        uiElements.hpText.textContent = `HP: ${Math.max(0, player.hp)}`;
+        lastHUDState.hp = player.hp;
+    }
     
-    if (player.weaponLevel >= 0) {
-        let currWep = WEAPONS[player.weaponLevel];
-        document.getElementById('ui-wep-name').textContent = `武裝: ${currWep ? currWep.name : 'Unknown'}`;
-        document.getElementById('ui-ammo-text').textContent = player.isReloading ? `換彈中...` : `彈藥: ${player.currentMagazine}/${player.totalAmmo}`;
-    } else {
-        document.getElementById('ui-wep-name').textContent = `武裝: 尚未裝備`;
-        document.getElementById('ui-ammo-text').textContent = `彈藥: 0/0`;
+    let ammoChanged = lastHUDState.ammo !== player.currentMagazine || lastHUDState.total !== player.totalAmmo || lastHUDState.reloading !== player.isReloading;
+    let wepChanged = lastHUDState.weapon !== player.weaponLevel;
+
+    if (wepChanged || ammoChanged) {
+        if (player.weaponLevel >= 0) {
+            if (wepChanged) {
+                let currWep = WEAPONS[player.weaponLevel];
+                if (currWep) uiElements.wepName.textContent = `武裝: ${currWep.name}`;
+            }
+            if (ammoChanged) {
+                if (player.isReloading) uiElements.ammoText.textContent = `換彈中...`;
+                else uiElements.ammoText.textContent = `彈藥: ${player.currentMagazine}/${player.totalAmmo}`;
+            }
+        } else {
+            if (wepChanged) uiElements.wepName.textContent = `武裝: 尚未裝備`;
+            if (ammoChanged) uiElements.ammoText.textContent = `彈藥: 0/0`;
+        }
+        lastHUDState.weapon = player.weaponLevel; lastHUDState.ammo = player.currentMagazine;
+        lastHUDState.total = player.totalAmmo; lastHUDState.reloading = player.isReloading;
     }
 
     for(let i=1; i<=5; i++) {
-        let el = document.getElementById(`m-count-${i}`);
-        if(el) el.textContent = `x ${Math.max(0, monstersLeft[i] || 0)}`;
+        if (uiElements.mCounts[i] && lastHUDState.mCounts[i] !== monstersLeft[i]) {
+            uiElements.mCounts[i].textContent = `x ${Math.max(0, monstersLeft[i])}`;
+            lastHUDState.mCounts[i] = monstersLeft[i];
+        }
     }
 }
 
@@ -231,55 +345,42 @@ function drawHUDIcons() {
 }
 setTimeout(drawHUDIcons, 100);
 
-function initMonsterQueue() {
-    monsterQueue = []; TOTAL_MONSTERS = 0; monstersLeft = [0, 0, 0, 0, 0, 0];
-    for (let m of MONSTER_BASE) {
-        for(let i=0; i<m.count; i++) monsterQueue.push({...m});
-        TOTAL_MONSTERS += m.count; monstersLeft[m.tier] += m.count; 
-    }
+function fetchLeaderboard() {
+    if (!GAS_LEADERBOARD_URL) return;
+    const timestamp = new Date().getTime();
+    fetch(`${GAS_LEADERBOARD_URL}?action=getLeaderboard&t=${timestamp}`)
+        .then(res => res.json())
+        .then(data => renderLeaderboard(data))
+        .catch(e => console.log("LB 獲取失敗", e));
 }
 
-// ==========================================
-// 🚀 遊戲狀態與連線邏輯 (修復 V42)
-// ==========================================
-
-async function fetchLeaderboard() {
+function renderLeaderboard(data) {
     const list = document.getElementById('leaderboard-list');
     if(!list) return;
-    if (!GAS_WEB_APP_URL) {
-        list.innerHTML = "<li>排行榜未啟動</li>";
-        return;
-    }
-    list.innerHTML = "<li>載入中...</li>";
-    try {
-        const timestamp = new Date().getTime();
-        // 獲取排行榜需要 action 參數
-        let res = await fetch(`${GAS_WEB_APP_URL}?action=getLeaderboard&t=${timestamp}`);
-        let data = await res.json();
-        list.innerHTML = "";
-        if (!data || data.length === 0) { list.innerHTML = "<li>暫無數據</li>"; return; }
-        data.forEach(item => {
-            let li = document.createElement('li');
-            let safeName = item.name && item.name.length > 6 ? item.name.substring(0, 6) + '..' : (item.name || '未知');
-            li.textContent = `${item.cls || ''} ${safeName} - ${item.score || 0}分 (${item.diff || 'S1'})`;
-            if (item.isMe) { li.style.backgroundColor = "rgba(46, 204, 113, 0.4)"; li.style.borderRadius = "4px"; }
-            list.appendChild(li);
-        });
-    } catch(e) {
-        console.log("LB 獲取失敗", e);
-        list.innerHTML = "<li>載入失敗，請檢查網路設定</li>";
-    }
+    list.innerHTML = "";
+    if (!data || data.length === 0) { list.innerHTML = "<li>暫無數據</li>"; return; }
+    
+    data.forEach(item => {
+        let li = document.createElement('li');
+        // 修正: 限制名字長度，防止排版跑位
+        let safeName = item.name.length > 6 ? item.name.substring(0, 6) + '..' : item.name;
+        li.textContent = `${item.cls} ${safeName} - ${item.score}分 (${item.diff})`;
+        if (item.isMe) { li.style.backgroundColor = "rgba(46, 204, 113, 0.4)"; li.style.borderRadius = "4px"; }
+        list.appendChild(li);
+    });
 }
 
-async function submitScore() {
+window.submitScore = async function() {
     const cls = document.getElementById('lb-class').value.trim();
     const sid = document.getElementById('lb-sid').value.trim();
     const name = document.getElementById('lb-name').value.trim();
     if (!cls || !sid || !name) { alert("請填寫班別、學號及名字！"); return; }
 
+    if (!GAS_LEADERBOARD_URL) return;
+
     scoreSubmitted = true;
     document.getElementById('submit-form').style.display = 'none';
-    document.getElementById('leaderboard-list').innerHTML = "<li>資料上傳中...</li>";
+    document.getElementById('leaderboard-list').innerHTML = "<li>上傳中並更新排行榜...</li>";
 
     const now = new Date();
     const dateStr = now.toLocaleDateString('zh-HK');
@@ -288,114 +389,99 @@ async function submitScore() {
     const score = enemiesKilled;
     const timestamp = now.getTime();
 
-    // 完全還原成功寫入版的 URL 參數 (加入 date 和 time)
-    const addUrl = `${GAS_WEB_APP_URL}?action=addScore&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}&diff=${encodeURIComponent(diff)}&cls=${encodeURIComponent(cls)}&sid=${encodeURIComponent(sid)}&name=${encodeURIComponent(name)}&score=${score}&t=${timestamp}`;
-    
+    const addUrl = `${GAS_LEADERBOARD_URL}?action=addScore&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}&diff=${encodeURIComponent(diff)}&cls=${encodeURIComponent(cls)}&sid=${encodeURIComponent(sid)}&name=${encodeURIComponent(name)}&score=${score}&t=${timestamp}`;
+    fetch(addUrl).catch(e => console.log("LB 上傳延遲", e));
+
     try {
-        await fetch(addUrl);
-        setTimeout(() => fetchLeaderboard(), 1000); // 確保 GAS 處理完成後再拉取
+        let res = await fetch(`${GAS_LEADERBOARD_URL}?action=getLeaderboard&t=${timestamp}`);
+        let data = await res.json();
+        data.push({ diff: diff, cls: cls, name: name, score: score, isMe: true });
+        data.sort((a, b) => b.score - a.score);
+        renderLeaderboard(data);
     } catch(e) {
-        console.error("上傳發生延遲/錯誤", e);
-        fetchLeaderboard();
+        renderLeaderboard([{ diff: diff, cls: cls, name: name, score: score, isMe: true }]);
     }
 }
 
-window.safeStart = function(level) {
-    try { initAudio(); } catch(e) {}
+window.startGame = function(level) {
     currentDifficulty = level;
-    document.getElementById('start-menu').style.display = 'none';
+    let menu = document.getElementById('start-menu');
+    if (menu) menu.style.display = 'none';
     resetGame();
-}
-
-window.showStartMenu = function() {
-    document.getElementById('submit-form').style.display = 'none';
-    document.getElementById('start-menu').style.display = 'flex';
-    gameState = 'START_MENU';
-    ['lb-class', 'lb-sid', 'lb-name'].forEach(id => { let el=document.getElementById(id); if(el)el.value=''; });
-}
-
-function resetGame() {
-    player.weaponLevel = -1; player.hp = player.maxHp; player.speed = 4; 
-    player.currentMagazine = 0; player.totalAmmo = 0; player.isReloading = false; 
-    
-    enemiesKilled = 0; totalMonstersSpawned = 0;
-    player.x = UI_BOUND + (canvas.width - UI_BOUND)/2; player.y = canvas.height / 2;
-    bullets = []; enemies = []; lootBoxes = []; ammoBoxes = []; particles = []; floatingTexts = [];
-    isShooting = false; keys.w = keys.a = keys.s = keys.d = false;
-    leftJoy.active = false; rightJoy.active = false;
-    globalTime = 0; bossAlarmTimer = 0; scoreSubmitted = false;
-    player.angle = 0; 
-    
-    document.getElementById('submit-form').style.display = 'none';
-    
-    initMonsterQueue();
-    fetchLeaderboard(); // 確保開局拉取最新排行榜
-    gameState = 'PLAYING';
-    
-    // 開局立即生成武器箱
-    lootBoxes.push({
-        x: UI_BOUND + (canvas.width - UI_BOUND)/2, y: canvas.height/2 + 100,
-        size: 35, pulse: 0, spawnTime: globalTime 
-    });
-}
-
-// ==========================================
-// 🧠 答題邏輯
-// ==========================================
-
-function triggerMath(type) {
-    currentMathType = type;
-    gameState = 'MATH_TIME';
-    isShooting = false; rightJoy.active = false; leftJoy.active = false; keys.w=keys.a=keys.s=keys.d=false;
-    
-    let headerEl = document.getElementById('math-header');
-    let containerEl = document.getElementById('math-container');
-    if (headerEl && containerEl) {
-        headerEl.textContent = type === 'UPGRADE' ? '⚡ 武器進化程序 ⚡' : '🔵 彈藥補給程序 🔵';
-        headerEl.style.color = type === 'UPGRADE' ? '#eab308' : '#38bdf8';
-        containerEl.style.borderColor = headerEl.style.color;
-    }
-
-    let qLevel = currentDifficulty === 'S3' ? '3' : (currentDifficulty === 'S2' ? '2' : '1');
-    let qData;
-
-    if (typeof generateIndicesQuestions === 'function') {
-        try { 
-            let qList = generateIndicesQuestions(1, qLevel);
-            qData = (qList && qList.length > 0) ? qList[0] : generateFallbackMCQ();
-        } catch(e) { qData = generateFallbackMCQ(); }
-    } else { qData = generateFallbackMCQ(); }
-
-    document.getElementById('math-question-content').innerHTML = qData.question;
-    const optsContainer = document.getElementById('math-options-container');
-    if (optsContainer) {
-        optsContainer.innerHTML = '';
-        if(qData.options) {
-            qData.options.forEach(opt => {
-                let btn = document.createElement('div'); btn.className = 'mcq-btn';
-                btn.innerHTML = `<span class="mcq-label">${opt.id}.</span> <span>${opt.text}</span>`;
-                btn.onclick = () => window.submitMCQ(opt.isCorrect);
-                optsContainer.appendChild(btn);
-            });
-        }
-    }
-
-    let overlay = document.getElementById('math-overlay');
-    if (overlay) {
-        if (typeof MathJax !== 'undefined') MathJax.typesetPromise([overlay]).catch(e => {});
-        overlay.style.display = 'flex';
-    }
-    mathTimer = 600; 
 }
 
 function generateFallbackMCQ() {
     let maxVal = 10 + (Math.max(0, player.weaponLevel) * 10);
-    let num1 = getRandomInt(5, maxVal); let num2 = getRandomInt(5, maxVal); let ans = num1 + num2;
-    let opts = [{text:`\\( ${ans} \\)`, isCorrect:true}, {text:`\\( ${ans+1} \\)`, isCorrect:false}, {text:`\\( ${ans-1} \\)`, isCorrect:false}, {text:`\\( ${ans+2} \\)`, isCorrect:false}];
+    let num1 = getRandomInt(5, maxVal); let num2 = getRandomInt(5, maxVal);
+    let ans = num1 + num2;
+    let opts = [
+        { text: `\\( ${ans} \\)`, isCorrect: true },
+        { text: `\\( ${ans + getRandomInt(1, 5)} \\)`, isCorrect: false },
+        { text: `\\( ${ans - getRandomInt(1, 5)} \\)`, isCorrect: false },
+        { text: `\\( ${ans + getRandomInt(6, 10)} \\)`, isCorrect: false }
+    ];
     return { 
         question: `<div style="font-size:16px;color:#cbd5e1;margin-bottom:10px;">請計算以下結果：</div><div style="font-size:28px;font-weight:bold;">\\( \\displaystyle ${num1} + ${num2} = ? \\)</div>`, 
         options: shuffleArray(opts).map((o,i)=>({...o, id: String.fromCharCode(65+i)})) 
     };
+}
+
+function triggerMath(type) {
+    currentMathType = type;
+    gameState = 'MATH_TIME';
+    isShooting = false; rightJoy.active = false; leftJoy.active = false;
+    
+    let headerEl = document.getElementById('math-header');
+    let containerEl = document.getElementById('math-container');
+    
+    if (headerEl && containerEl) {
+        if (type === 'UPGRADE') {
+            headerEl.textContent = '⚡ 武器進化程序 ⚡'; headerEl.style.color = '#eab308';
+            containerEl.style.borderColor = '#eab308';
+        } else {
+            headerEl.textContent = '🔵 彈藥補給程序 🔵'; headerEl.style.color = '#38bdf8';
+            containerEl.style.borderColor = '#38bdf8';
+        }
+    }
+
+    let lvlMap = { 'S1': '1', 'S2': '2', 'S3': '3' };
+    let qLevel = lvlMap[currentDifficulty] || '1';
+    let qData;
+
+    if (typeof generateIndicesQuestions === 'function') {
+        try {
+            let qList = generateIndicesQuestions(1, qLevel);
+            qData = (qList && qList.length > 0) ? qList[0] : generateFallbackMCQ();
+        } catch(e) { 
+            console.error("題庫生成錯誤，使用後備題目", e); 
+            qData = generateFallbackMCQ(); 
+        }
+    } else {
+        qData = generateFallbackMCQ();
+    }
+
+    let contentEl = document.getElementById('math-question-content');
+    if (contentEl) contentEl.innerHTML = qData.question;
+    
+    const optsContainer = document.getElementById('math-options-container');
+    if (optsContainer) {
+        optsContainer.innerHTML = '';
+        qData.options.forEach(opt => {
+            let btn = document.createElement('div');
+            btn.className = 'mcq-btn';
+            btn.innerHTML = `<span class="mcq-label">${opt.id}.</span> <span>${opt.text}</span>`;
+            btn.onclick = () => window.submitMCQ(opt.isCorrect);
+            optsContainer.appendChild(btn);
+        });
+    }
+
+    let overlay = document.getElementById('math-overlay');
+    if (overlay) {
+        if (typeof MathJax !== 'undefined') MathJax.typesetPromise([overlay]).catch(e => console.log(e));
+        overlay.style.display = 'flex';
+    }
+    
+    mathTimer = 600; // 10 秒
 }
 
 window.submitMCQ = function(isCorrect) {
@@ -404,239 +490,427 @@ window.submitMCQ = function(isCorrect) {
             if (player.weaponLevel === -1) {
                 player.weaponLevel = 0; player.speed = WEAPONS[0].playerSpeed;
                 player.currentMagazine = WEAPONS[0].magCapacity || 30; player.totalAmmo += WEAPONS[0].reloadAmmo || 30;
+                addFloatingText(`解鎖: ${WEAPONS[0].name}!`, canvas.width/2, canvas.height/4, '#fbbf24', 35);
             } else if (player.weaponLevel < WEAPONS.length - 1) {
                 player.weaponLevel++; player.speed = WEAPONS[player.weaponLevel].playerSpeed;
-                player.totalAmmo += WEAPONS[player.weaponLevel].reloadAmmo || 30;
+                let ammoToAdd = WEAPONS[player.weaponLevel].reloadAmmo || 30; player.totalAmmo += ammoToAdd;
+                addFloatingText(`解鎖: ${WEAPONS[player.weaponLevel].name}!`, canvas.width/2, canvas.height/4, '#fbbf24', 35);
+                addFloatingText(`+${ammoToAdd} 總彈藥`, canvas.width/2, canvas.height/4 + 40, '#000000', 25);
             } else {
-                player.totalAmmo += WEAPONS[player.weaponLevel].reloadAmmo || 30;
+                let ammoToAdd = WEAPONS[player.weaponLevel].reloadAmmo || 30; player.totalAmmo += ammoToAdd;
+                addFloatingText(`等級上限！ +${ammoToAdd} 總彈藥`, canvas.width/2, canvas.height/4, '#fbbf24', 35);
             }
             player.hp = Math.min(player.maxHp, player.hp + 50); 
             createParticles(player.x, player.y, '#4ade80', 60, 10); 
-        } else {
-            let ammoToAdd = (player.weaponLevel >= 0) ? WEAPONS[player.weaponLevel].ammoBoxRefill || 30 : 30;
+        } else if (currentMathType === 'AMMO') {
+            let ammoToAdd = (player.weaponLevel >= 0 && WEAPONS[player.weaponLevel].ammoBoxRefill) ? WEAPONS[player.weaponLevel].ammoBoxRefill : 30;
             player.totalAmmo += ammoToAdd;
+            addFloatingText(`+${ammoToAdd} 總彈藥`, canvas.width/2, canvas.height/4 + 40, '#38bdf8', 25);
             createParticles(player.x, player.y, '#38bdf8', 50, 10); 
         }
         closeMathOverlay(true);
     } else {
+        addFloatingText("❌ 答錯了！寶箱損毀", player.x, player.y - 40, '#ef4444');
         closeMathOverlay(false);
     }
 }
 
 function closeMathOverlay(success) {
-    document.getElementById('math-overlay').style.display = 'none';
+    let overlay = document.getElementById('math-overlay');
+    if (overlay) overlay.style.display = 'none';
     shakeTime = success ? 0 : 15;
-    gameState = 'PLAYING'; isShooting = false;
+    gameState = 'PLAYING'; 
+    isShooting = false; leftJoy.active = false; rightJoy.active = false; keys.w = keys.a = keys.s = keys.d = false; 
+    let sSfx = document.getElementById('shootSfx'); if (sSfx && !sSfx.paused) { sSfx.pause(); sSfx.currentTime = 0; }
 }
 
-// ==========================================
-// 🕹️ 輸入與事件
-// ==========================================
+// 事件處理綁定
+canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
+canvas.addEventListener('touchmove', handleTouchMove, {passive: false});
+canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
+canvas.addEventListener('touchcancel', handleTouchEnd, {passive: false});
 
-canvas.addEventListener('touchstart', (e) => {
-    if(e.target !== canvas) return; e.preventDefault(); initAudio();
-    if (gameState === 'GAME_OVER' || gameState === 'VICTORY') {
-        if (scoreSubmitted || document.getElementById('submit-form').style.display === 'none') resetGame();
-        return;
-    }
-    if (gameState === 'PLAYING') {
-        for(let t of e.changedTouches) {
-            if (t.clientX > UI_BOUND && t.clientX < canvas.width / 2 && !leftJoy.active) {
-                leftJoy.active = true; leftJoy.id = t.identifier; updateFixedJoystick(leftJoy, t.clientX, t.clientY);
-            } else if (t.clientX >= canvas.width / 2 && !rightJoy.active) {
-                rightJoy.active = true; rightJoy.id = t.identifier;
-                rightJoy.base = {x: t.clientX, y: t.clientY}; rightJoy.stick = {x: t.clientX, y: t.clientY};
-                player.angle = Math.atan2(0, 1);
+function handleTouchStart(e) {
+    if(e.target !== canvas) return; 
+    e.preventDefault(); initAudio();
+    const touches = e.changedTouches;
+    for (let i = 0; i < touches.length; i++) {
+        let t = touches[i]; let tx = t.clientX; let ty = t.clientY;
+        if (gameState === 'GAME_OVER' || gameState === 'VICTORY') { 
+            if (scoreSubmitted || (document.getElementById('submit-form') && document.getElementById('submit-form').style.display === 'none')) resetGame(); 
+            return; 
+        }
+        if (gameState === 'PLAYING') {
+            if (tx > UI_BOUND && tx < canvas.width / 2 && !leftJoy.active) {
+                leftJoy.active = true; leftJoy.id = t.identifier; updateFixedJoystick(leftJoy, tx, ty);
+            } else if (tx >= canvas.width / 2 && !rightJoy.active) {
+                rightJoy.active = true; rightJoy.id = t.identifier; rightJoy.base = {x: t.clientX, y: t.clientY}; rightJoy.stick = {x: t.clientX, y: t.clientY};
+                player.angle = Math.atan2(ty - player.y, tx - player.x) || 0;
             }
         }
     }
-}, {passive: false});
+}
 
-canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    for(let t of e.changedTouches) {
-        if (leftJoy.active && t.identifier === leftJoy.id) updateFixedJoystick(leftJoy, Math.max(UI_BOUND, t.clientX), t.clientY); 
+function handleTouchMove(e) {
+    e.preventDefault(); const touches = e.changedTouches;
+    for (let i = 0; i < touches.length; i++) {
+        let t = touches[i]; let tx = t.clientX; let ty = t.clientY;
+        if (leftJoy.active && t.identifier === leftJoy.id) updateFixedJoystick(leftJoy, Math.max(UI_BOUND, tx), ty); 
         if (rightJoy.active && t.identifier === rightJoy.id) {
-            let dx = t.clientX - rightJoy.base.x; let dy = t.clientY - rightJoy.base.y; let dist = Math.sqrt(dx*dx + dy*dy);
+            let dx = tx - rightJoy.base.x; let dy = ty - rightJoy.base.y; let dist = Math.sqrt(dx*dx + dy*dy);
             rightJoy.angle = Math.atan2(dy, dx) || 0;
             if (dist > joyRadius) {
                 rightJoy.stick.x = rightJoy.base.x + Math.cos(rightJoy.angle) * joyRadius; rightJoy.stick.y = rightJoy.base.y + Math.sin(rightJoy.angle) * joyRadius;
-            } else { rightJoy.stick.x = t.clientX; rightJoy.stick.y = t.clientY; }
+                rightJoy.dir.x = Math.cos(rightJoy.angle); rightJoy.dir.y = Math.sin(rightJoy.angle);
+            } else {
+                rightJoy.stick.x = tx; rightJoy.stick.y = ty; rightJoy.dir.x = dist > 0 ? dx / joyRadius : 0; rightJoy.dir.y = dist > 0 ? dy / joyRadius : 0;
+            }
             player.angle = rightJoy.angle;
         }
     }
-}, {passive: false});
+}
 
-canvas.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    for(let t of e.changedTouches) {
-        if (leftJoy.active && t.identifier === leftJoy.id) { leftJoy.active = false; leftJoy.stick = {x: leftJoyBase.x, y: leftJoyBase.y}; leftJoy.dir = {x:0, y:0}; }
+function handleTouchEnd(e) {
+    e.preventDefault(); const touches = e.changedTouches;
+    for (let i = 0; i < touches.length; i++) {
+        let t = touches[i];
+        if (leftJoy.active && t.identifier === leftJoy.id) { leftJoy.active = false; leftJoy.dir = {x:0, y:0}; leftJoy.stick = {x: leftJoyBase.x, y: leftJoyBase.y}; }
         if (rightJoy.active && t.identifier === rightJoy.id) { rightJoy.active = false; rightJoy.dir = {x:0, y:0}; }
     }
-}, {passive: false});
+}
 
 function updateFixedJoystick(joy, tx, ty) {
-    let dx = tx - leftJoyBase.x; let dy = ty - leftJoyBase.y; let dist = Math.sqrt(dx*dx + dy*dy); let angle = Math.atan2(dy, dx);
+    let dx = tx - leftJoyBase.x; let dy = ty - leftJoyBase.y; let dist = Math.sqrt(dx*dx + dy*dy); let angle = Math.atan2(dy, dx) || 0;
     if (dist > joyRadius) {
-        joy.stick.x = leftJoyBase.x + Math.cos(angle) * joyRadius; joy.stick.y = leftJoyBase.y + Math.sin(angle) * joyRadius;
-    } else { joy.stick.x = tx; joy.stick.y = ty; }
-    joy.dir = {x: dist > 0 ? dx/joyRadius : 0, y: dist > 0 ? dy/joyRadius : 0};
+        joy.stick.x = leftJoyBase.x + Math.cos(angle) * joyRadius; joy.stick.y = leftJoyBase.y + Math.sin(angle) * joyRadius; joy.dir.x = Math.cos(angle); joy.dir.y = Math.sin(angle);
+    } else {
+        joy.stick.x = tx; joy.stick.y = ty; joy.dir.x = dist > 0 ? dx / joyRadius : 0; joy.dir.y = dist > 0 ? dy / joyRadius : 0;
+    }
 }
 
 window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
 window.addEventListener('mousedown', (e) => {
-    if(e.target !== canvas) return; initAudio();
+    if(e.target !== canvas) return;
+    initAudio();
     if (gameState === 'GAME_OVER' || gameState === 'VICTORY') {
-        if (scoreSubmitted || document.getElementById('submit-form').style.display === 'none') resetGame(); 
+        if (scoreSubmitted || (document.getElementById('submit-form') && document.getElementById('submit-form').style.display === 'none')) resetGame(); 
     } else if (gameState === 'PLAYING') isShooting = true;
 });
 window.addEventListener('mouseup', () => { isShooting = false; });
 window.addEventListener('keydown', (e) => {
     initAudio();
     if (gameState === 'PLAYING') { let key = e.key.toLowerCase(); if (keys.hasOwnProperty(key)) keys[key] = true; } 
-    else if (gameState === 'GAME_OVER' || gameState === 'VICTORY') { if (e.key === 'Enter') resetGame(); }
+    else if (gameState === 'GAME_OVER' || gameState === 'VICTORY') { 
+        if (e.key === 'Enter') { if (scoreSubmitted || (document.getElementById('submit-form') && document.getElementById('submit-form').style.display === 'none')) resetGame(); }
+    }
 });
 window.addEventListener('keyup', (e) => { if (gameState === 'PLAYING') { let key = e.key.toLowerCase(); if (keys.hasOwnProperty(key)) keys[key] = false; }});
 
-// ==========================================
-// ⚔️ 遊戲邏輯與繪圖引擎
-// ==========================================
+// === FILE 2 END ===
 
-function spawnLootBox() { lootBoxes.push({ x: Math.random()*(canvas.width-UI_BOUND-100)+UI_BOUND+50, y: Math.random()*(canvas.height-200)+100, size: 35, pulse: 0, spawnTime: globalTime }); }
-function spawnAmmoBox() { if (ammoBoxes.length < 3) ammoBoxes.push({ x: Math.random()*(canvas.width-UI_BOUND-100)+UI_BOUND+50, y: Math.random()*(canvas.height-200)+100, size: 28, pulse: 0, spawnTime: globalTime }); }
-function fireBullet(angle, w, s) { bullets.push({ x: player.x+Math.cos(player.angle)*30, y: player.y+Math.sin(player.angle)*30, vx: Math.cos(angle)*s, vy: Math.sin(angle)*s, radius: w.size||4, color: w.color, glow: w.glow, damage: w.damage, penetrate: w.penetrate, hitEnemies: [] }); }
-function createParticles(x, y, color, count, speedStr=5) { for(let i=0; i<count; i++) particles.push({x, y, vx:(Math.random()-0.5)*speedStr, vy:(Math.random()-0.5)*speedStr, life:1.0, decay:0.02+Math.random()*0.04, color, size:2+Math.random()*4}); }
-function checkCollision(obj1, obj2, dist) { return Math.hypot(obj1.x-obj2.x, obj1.y-obj2.y) <= dist; }
+// ==============================================================================
+// 📁 FILE 3: engine.js (請將以下代碼複製到你的 engine.js)
+// ==============================================================================
+
+function initMonsterQueue() {
+    monsterQueue = []; TOTAL_MONSTERS = 0; monstersLeft = [0, 0, 0, 0, 0, 0];
+    for (let m of MONSTER_BASE) {
+        for(let i=0; i<m.count; i++) monsterQueue.push({...m});
+        TOTAL_MONSTERS += m.count; monstersLeft[m.tier] += m.count; 
+    }
+}
+
+function fireBullet(angle, weapon, customSpeed) {
+    bullets.push({
+        x: player.x + Math.cos(player.angle || 0) * 30, y: player.y + Math.sin(player.angle || 0) * 30, 
+        vx: Math.cos(angle || 0) * customSpeed, vy: Math.sin(angle || 0) * customSpeed,
+        radius: weapon.size || 4, color: weapon.color, glow: weapon.glow, damage: weapon.damage, penetrate: weapon.penetrate, hitEnemies: []
+    });
+}
+
+function spawnLootBox() {
+    lootBoxes.push({
+        x: Math.random() * (canvas.width - UI_BOUND - 100) + UI_BOUND + 50, y: Math.random() * (canvas.height - 200) + 100,
+        size: 35, pulse: 0, spawnTime: globalTime 
+    });
+    addFloatingText("武器升級箱降落！", canvas.width/2, 150, '#eab308', 30);
+}
+
+function spawnAmmoBox() {
+    if (ammoBoxes.length < 3) {
+        ammoBoxes.push({
+            x: Math.random() * (canvas.width - UI_BOUND - 100) + UI_BOUND + 50, y: Math.random() * (canvas.height - 200) + 100,
+            size: 28, pulse: 0, spawnTime: globalTime 
+        });
+        addFloatingText("彈藥補給包降落！", canvas.width/2, 120, '#38bdf8', 26);
+    }
+}
+
+function spawnEnemy() {
+    if (gameState !== 'PLAYING' || monsterQueue.length === 0) return;
+    let mData = monsterQueue.shift(); totalMonstersSpawned++;
+    
+    let x = Math.random() < 0.5 ? UI_BOUND + 10 : canvas.width + 50;
+    let y = Math.random() * canvas.height;
+
+    enemies.push({ 
+        x: x, y: y, size: mData.size, color: mData.color, speed: mData.speed, 
+        hp: mData.hp, maxHp: mData.hp, tier: mData.tier, name: mData.name, bobPhase: Math.random() * Math.PI * 2 
+    });
+    
+    if (mData.tier === 5) {
+        bossAlarmTimer = 120;
+        addFloatingText("⚠️ 萬血首領來襲！ ⚠️", canvas.width/2, 100, '#ef4444', 50);
+    }
+}
+
+function triggerGameOver(isVictory) {
+    gameState = isVictory ? 'VICTORY' : 'GAME_OVER';
+    let form = document.getElementById('submit-form');
+    if (form) form.style.display = 'flex';
+    scoreSubmitted = false;
+}
+
+function resetGame() {
+    player.weaponLevel = -1;
+    player.hp = player.maxHp; 
+    player.speed = 4; 
+    player.currentMagazine = 0; 
+    player.totalAmmo = 0; 
+    player.isReloading = false; player.reloadTimer = 0;
+    player.angle = 0;
+    
+    enemiesKilled = 0; totalMonstersSpawned = 0;
+    player.x = UI_BOUND + (canvas.width - UI_BOUND)/2; player.y = canvas.height / 2;
+    bullets = []; enemies = []; lootBoxes = []; ammoBoxes = []; particles = []; floatingTexts = [];
+    isShooting = false; keys.w = keys.a = keys.s = keys.d = false;
+    leftJoy.active = false; rightJoy.active = false;
+    player.lastFireTime = 0; globalTime = 0; bossAlarmTimer = 0; currentWave = 1;
+    
+    let form = document.getElementById('submit-form');
+    if (form) form.style.display = 'none';
+    
+    initMonsterQueue(); fetchLeaderboard();
+    gameState = 'PLAYING';
+    
+    spawnLootBox();
+}
+
+function checkCollision(obj1, obj2, dist) {
+    let dx = obj1.x - obj2.x; let dy = obj1.y - obj2.y; return Math.sqrt(dx*dx + dy*dy) <= dist;
+}
+
+function startReload() {
+    if (player.weaponLevel === -1) return;
+    let cap = WEAPONS[player.weaponLevel].magCapacity || 30;
+    if (player.totalAmmo > 0 && player.currentMagazine < cap && !player.isReloading) {
+        player.isReloading = true;
+        player.reloadTimer = 30; 
+        let rSfx = document.getElementById('reloadSfx');
+        if (rSfx) { rSfx.currentTime = 0; rSfx.play().catch(e=>{}); }
+    }
+}
 
 function update() {
-    globalTime++; updateHTMLHUD();
+    globalTime++;
+    updateHTMLHUD();
+
     if (gameState === 'START_MENU') return;
 
     if (gameState === 'MATH_TIME') {
         mathTimer--;
+        let pct = Math.max(0, (mathTimer / 600) * 100);
         if (uiElements.mathTimerBar) {
-            uiElements.mathTimerBar.style.width = (mathTimer/600*100)+'%';
+            uiElements.mathTimerBar.style.width = pct + '%';
             uiElements.mathTimerBar.style.backgroundColor = mathTimer < 180 ? '#ef4444' : '#4ade80';
         }
-        if (mathTimer <= 0) closeMathOverlay(false);
+        if (mathTimer <= 0) {
+            closeMathOverlay(false);
+            addFloatingText("⏳ 時間到！寶箱已損毀。", player.x, player.y - 40, '#ef4444');
+        }
     }
-    if (gameState !== 'PLAYING') return;
 
     if (player.recoilOffset > 0) player.recoilOffset *= 0.8; 
     if (bossAlarmTimer > 0) bossAlarmTimer--;
 
-    for (let i=particles.length-1; i>=0; i--) {
-        particles[i].x += particles[i].vx; particles[i].y += particles[i].vy; particles[i].life -= particles[i].decay;
+    for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].x += particles[i].vx; particles[i].y += particles[i].vy;
+        particles[i].life -= particles[i].decay;
         if (particles[i].life <= 0) particles.splice(i, 1);
     }
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        floatingTexts[i].y += floatingTexts[i].dy; floatingTexts[i].life -= 0.02;
+        if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1);
+    }
+
+    if (gameState !== 'PLAYING') return;
 
     if (player.isReloading && player.weaponLevel >= 0) {
         player.reloadTimer--;
         if (player.reloadTimer <= 0) {
-            let take = Math.min(WEAPONS[player.weaponLevel].magCapacity - player.currentMagazine, player.totalAmmo);
-            player.currentMagazine += take; player.totalAmmo -= take; player.isReloading = false;
+            let cap = WEAPONS[player.weaponLevel].magCapacity || 30;
+            let bulletsNeeded = cap - player.currentMagazine;
+            let bulletsToReload = Math.min(bulletsNeeded, player.totalAmmo);
+            player.currentMagazine += bulletsToReload;
+            player.totalAmmo -= bulletsToReload;
+            player.isReloading = false;
         }
     }
 
     if (player.weaponLevel >= 0 && globalTime % ammoBoxSpawnInterval === 0) spawnAmmoBox(); 
-    if (globalTime % lootBoxSpawnInterval === 0 && globalTime > 100) spawnLootBox(); 
+    if (globalTime % lootBoxSpawnInterval === 0) spawnLootBox(); 
     
-    if (monsterQueue.length > 0 && (enemies.length < 4 || globalTime % 180 === 0)) {
-        let m = monsterQueue.shift(); totalMonstersSpawned++;
-        enemies.push({...m, x: Math.random()<0.5?UI_BOUND-50:canvas.width+50, y: Math.random()*canvas.height, maxHp: m.hp, bobPhase: Math.random()*Math.PI*2, angle: 0});
+    if (monsterQueue.length > 0) { 
+        if (enemies.length < 4 || globalTime % 180 === 0) spawnEnemy(); 
     }
 
-    let spd = player.speed || 4; 
-    let dx = leftJoy.active ? leftJoy.dir.x * spd : (keys.d ? spd : (keys.a ? -spd : 0));
-    let dy = leftJoy.active ? leftJoy.dir.y * spd : (keys.s ? spd : (keys.w ? -spd : 0));
+    let dx = 0, dy = 0; let safeSpeed = player.speed || 4; 
+    if (leftJoy.active) { dx = leftJoy.dir.x * safeSpeed; dy = leftJoy.dir.y * safeSpeed; } 
+    else {
+        if (keys.w) dy -= safeSpeed; if (keys.s) dy += safeSpeed;
+        if (keys.a) dx -= safeSpeed; if (keys.d) dx += safeSpeed;
+    }
     
     player.isMoving = (dx !== 0 || dy !== 0);
-    if (dx !== 0 && dy !== 0 && !leftJoy.active) { let len = Math.sqrt(dx*dx+dy*dy); dx = (dx/len)*spd; dy = (dy/len)*spd; }
-    player.x = Math.max(UI_BOUND + player.radius, Math.min(canvas.width - player.radius, player.x + dx));
-    player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y + dy));
+    if (dx !== 0 && dy !== 0 && !leftJoy.active) { 
+        let len = Math.sqrt(dx*dx + dy*dy); dx = (dx / len) * safeSpeed; dy = (dy / len) * safeSpeed; 
+    }
+    
+    if (!isNaN(dx) && !isNaN(dy)) { player.x += dx; player.y += dy; }
+    player.x = Math.max(UI_BOUND + player.radius, Math.min(canvas.width - player.radius, player.x));
+    player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
 
-    if (rightJoy.active) player.angle = rightJoy.angle;
-    else if (!('ontouchstart' in window)) player.angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+    if (rightJoy.active) { player.angle = rightJoy.angle || 0; } 
+    else if (!('ontouchstart' in window)) { player.angle = Math.atan2(mouseY - player.y, mouseX - player.x) || 0; }
 
-    if ((isShooting || rightJoy.active) && player.weaponLevel >= 0) {
-        const w = WEAPONS[player.weaponLevel];
-        if (globalTime - player.lastFireTime >= w.fireRate) {
-            if (player.currentMagazine > 0 && !player.isReloading) {
-                let sfx = document.getElementById('shootSfx'); if(sfx) { sfx.currentTime=0; sfx.play().catch(()=>{}); }
-                player.currentMagazine--; 
-                for(let k=0; k<w.bullets; k++) fireBullet(player.angle + (Math.random()-0.5)*0.05, w, w.speed - k*2);
-                createParticles(player.x + Math.cos(player.angle)*30, player.y + Math.sin(player.angle)*30, w.color, w.level*2, w.level*1.5);
-                shakeTime = 2; player.recoilOffset = w.recoil; player.lastFireTime = globalTime;
-            } else if (player.currentMagazine <= 0 && player.totalAmmo > 0 && !player.isReloading) {
-                player.isReloading = true; player.reloadTimer = 30; 
-                let rSfx = document.getElementById('reloadSfx'); if(rSfx) { rSfx.currentTime=0; rSfx.play().catch(()=>{}); }
+    if (isShooting || rightJoy.active) {
+        if (player.weaponLevel === -1) {
+            if (globalTime % 30 === 0) {
+                addFloatingText("請先拾取升級箱獲取武器！", player.x, player.y - 40, '#ef4444');
+                let emptySfx = document.getElementById('emptyAmmoSfx'); 
+                if (emptySfx) { emptySfx.currentTime = 0; emptySfx.play().catch(e=>{}); }
+            }
+            let sSfx = document.getElementById('shootSfx'); if (sSfx && !sSfx.paused) { sSfx.pause(); sSfx.currentTime = 0; }
+        } else {
+            const weapon = WEAPONS[player.weaponLevel];
+            if (globalTime - player.lastFireTime >= weapon.fireRate) {
+                if (player.currentMagazine > 0 && !player.isReloading) {
+                    let sSfx = document.getElementById('shootSfx');
+                    if (sSfx) { sSfx.currentTime = 0; sSfx.play().catch(e=>{}); }
+
+                    player.currentMagazine--; 
+                    for(let k=0; k<weapon.bullets; k++) {
+                        let speedOffset = weapon.speed - (k * 2.5); 
+                        if (speedOffset < 8) speedOffset = 8;
+                        let angleOffset = (player.angle || 0) + (Math.random() - 0.5) * 0.05; 
+                        fireBullet(angleOffset, weapon, speedOffset);
+                    }
+                    createParticles(player.x + Math.cos(player.angle || 0)*30, player.y + Math.sin(player.angle || 0)*30, weapon.color, weapon.level*2, weapon.level*1.5);
+                    shakeTime = Math.max(shakeTime, 2);
+                    player.recoilOffset = weapon.recoil; player.lastFireTime = globalTime;
+                } else if (player.currentMagazine <= 0 && player.totalAmmo > 0 && !player.isReloading) {
+                    startReload(); 
+                    let sSfx = document.getElementById('shootSfx'); if (sSfx && !sSfx.paused) { sSfx.pause(); sSfx.currentTime = 0; }
+                } else if (player.currentMagazine <= 0 && player.totalAmmo <= 0 && !player.isReloading) {
+                    if (globalTime % 30 === 0) {
+                        addFloatingText("彈藥耗盡！尋找補給箱！", player.x, player.y - 40, '#ef4444');
+                        let emptySfx = document.getElementById('emptyAmmoSfx'); if (emptySfx) { emptySfx.currentTime = 0; emptySfx.play().catch(e=>{}); }
+                    }
+                    let sSfx = document.getElementById('shootSfx'); if (sSfx && !sSfx.paused) { sSfx.pause(); sSfx.currentTime = 0; }
+                }
             }
         }
+    } else {
+        let sSfx = document.getElementById('shootSfx'); if (sSfx && !sSfx.paused) { sSfx.pause(); sSfx.currentTime = 0; }
     }
 
-    for (let i=bullets.length-1; i>=0; i--) {
+    for (let i = bullets.length - 1; i >= 0; i--) {
         let b = bullets[i]; b.x += b.vx; b.y += b.vy;
         if (Math.random() < 0.3) createParticles(b.x, b.y, b.color, 1, 1);
         if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) bullets.splice(i, 1);
     }
 
-    for (let i=enemies.length-1; i>=0; i--) {
-        let e = enemies[i];
-        e.angle = Math.atan2(player.y - e.y, player.x - e.x);
-        e.x += Math.cos(e.angle) * e.speed; e.y += Math.sin(e.angle) * e.speed;
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let enemy = enemies[i];
+        let angleToPlayer = Math.atan2(player.y - enemy.y, player.x - enemy.x) || 0;
+        enemy.angle = angleToPlayer;
+        enemy.x += Math.cos(angleToPlayer) * enemy.speed; enemy.y += Math.sin(angleToPlayer) * enemy.speed;
 
-        if (checkCollision(player, e, player.radius + e.size/2)) {
-            player.hp -= (10 + e.tier*5); shakeTime = 10;
+        if (checkCollision(player, enemy, player.radius + enemy.size/2)) {
+            let dmg = 10 + (enemy.tier * 5); 
+            player.hp -= dmg; shakeTime = 15;
             createParticles(player.x, player.y, '#ef4444', 30, 8); 
-            e.x -= Math.cos(e.angle)*40; e.y -= Math.sin(e.angle)*40;
-            if (player.hp <= 0) { gameState='GAME_OVER'; document.getElementById('submit-form').style.display = 'flex'; scoreSubmitted=false; }
+            addFloatingText(`-${dmg}`, player.x, player.y - 50, '#ef4444', 24);
+            enemy.x -= Math.cos(angleToPlayer) * 40; enemy.y -= Math.sin(angleToPlayer) * 40;
+            if (player.hp <= 0) { createParticles(player.x, player.y, '#ef4444', 100, 15); triggerGameOver(false); }
             continue;
         }
 
-        for (let j=bullets.length-1; j>=0; j--) {
+        for (let j = bullets.length - 1; j >= 0; j--) {
             let b = bullets[j];
-            if (b.penetrate && b.hitEnemies.includes(e)) continue;
+            if (b.penetrate && b.hitEnemies.includes(enemy)) continue;
 
-            if (checkCollision(e, b, e.size/2 + b.radius)) {
-                e.hp -= b.damage; createParticles(e.x, e.y, b.color, 6, 5); 
-                if (b.penetrate) b.hitEnemies.push(e); else bullets.splice(j, 1); 
+            if (checkCollision(enemy, b, enemy.size/2 + b.radius)) {
+                enemy.hp -= b.damage; 
+                createParticles(enemy.x, enemy.y, b.color, 6, 5); 
+                if (b.penetrate) b.hitEnemies.push(enemy); else bullets.splice(j, 1); 
 
-                if (e.hp <= 0) {
-                    createParticles(e.x, e.y, e.color, e.tier===5?100:40, 8); 
-                    monstersLeft[e.tier]--; enemies.splice(i, 1); enemiesKilled++;
-                    if (enemiesKilled >= TOTAL_MONSTERS) { gameState='VICTORY'; document.getElementById('submit-form').style.display='flex'; scoreSubmitted=false; }
+                if (enemy.hp <= 0) {
+                    createParticles(enemy.x, enemy.y, enemy.color, enemy.tier === 5 ? 100 : 40, 8); 
+                    monstersLeft[enemy.tier]--; 
+                    enemies.splice(i, 1); enemiesKilled++;
+                    if (enemiesKilled >= TOTAL_MONSTERS) triggerGameOver(true);
                     break; 
                 }
             }
         }
     }
 
-    [lootBoxes, ammoBoxes].forEach(list => {
-        for (let i=list.length-1; i>=0; i--) {
-            if (globalTime - list[i].spawnTime > 600) { createParticles(list[i].x, list[i].y, '#94a3b8', 25, 5); list.splice(i, 1); continue; }
-            list[i].pulse += 0.1;
-            if (checkCollision(player, list[i], player.radius + list[i].size/2)) {
-                createParticles(list[i].x, list[i].y, list===lootBoxes?'#eab308':'#38bdf8', 40, 8);
-                let type = list===lootBoxes?'UPGRADE':'AMMO';
-                list.splice(i, 1); triggerMath(type); break;
-            }
+    for (let i = lootBoxes.length - 1; i >= 0; i--) {
+        if (globalTime - lootBoxes[i].spawnTime > 600) { createParticles(lootBoxes[i].x, lootBoxes[i].y, '#94a3b8', 25, 5); lootBoxes.splice(i, 1); continue; }
+        lootBoxes[i].pulse += 0.1;
+        if (checkCollision(player, lootBoxes[i], player.radius + lootBoxes[i].size/2)) {
+            createParticles(lootBoxes[i].x, lootBoxes[i].y, '#eab308', 40, 8);
+            lootBoxes.splice(i, 1); triggerMath('UPGRADE'); 
+            break;
         }
-    });
+    }
+
+    for (let i = ammoBoxes.length - 1; i >= 0; i--) {
+        if (globalTime - ammoBoxes[i].spawnTime > 600) { createParticles(ammoBoxes[i].x, ammoBoxes[i].y, '#94a3b8', 25, 5); ammoBoxes.splice(i, 1); continue; }
+        ammoBoxes[i].pulse += 0.1;
+        if (checkCollision(player, ammoBoxes[i], player.radius + ammoBoxes[i].size/2)) {
+            createParticles(ammoBoxes[i].x, ammoBoxes[i].y, '#38bdf8', 40, 8);
+            ammoBoxes.splice(i, 1); triggerMath('AMMO'); 
+            break;
+        }
+    }
 }
 
+// 🚀 畫布效能極限優化：徹底移除耗能的 shadowBlur，改用透明圖層做發光效果
 function draw() {
-    if (gameState === 'START_MENU') return;
+    if (gameState === 'START_MENU') {
+        ctx.fillStyle = '#0f172a'; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        return;
+    }
 
-    ctx.fillStyle = '#d2b48c'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#d2b48c'; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
     ctx.save();
-    if (shakeTime > 0) { let mag = (shakeTime/10)*8; ctx.translate((Math.random()-0.5)*mag, (Math.random()-0.5)*mag); shakeTime--; }
+    if (shakeTime > 0) {
+        let mag = (shakeTime / 10) * 8; 
+        ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag); shakeTime--;
+    }
 
     ctx.strokeStyle = 'rgba(139, 69, 19, 0.15)'; ctx.lineWidth = 2;
     for(let i=0; i<canvas.width; i+=80) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
     for(let i=0; i<canvas.height; i+=80) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
 
     if (bossAlarmTimer > 0) {
-        ctx.fillStyle = `rgba(220, 38, 38, ${Math.abs(Math.sin(bossAlarmTimer*0.1))*0.4})`;
+        let alpha = Math.abs(Math.sin(bossAlarmTimer * 0.1)) * 0.4;
+        ctx.fillStyle = `rgba(220, 38, 38, ${alpha})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
@@ -645,41 +919,53 @@ function draw() {
     for (let e of enemies) drawables.push({ type: 'enemy', y: e.y, obj: e });
     for (let b of lootBoxes) drawables.push({ type: 'box', y: b.y, obj: b });
     for (let a of ammoBoxes) drawables.push({ type: 'ammoBox', y: a.y, obj: a });
+    
     drawables.sort((a, b) => a.y - b.y);
 
     for (let item of drawables) {
-        if (item.type === 'box' || item.type === 'ammoBox') {
-            let box = item.obj; let isLoot = item.type === 'box';
-            let glow = Math.abs(Math.sin(box.pulse)) * 8; let timeLeft = 600 - (globalTime - box.spawnTime);
+        if (item.type === 'box') {
+            let box = item.obj; let glow = Math.abs(Math.sin(box.pulse)) * 8; let timeLeft = 600 - (globalTime - box.spawnTime);
             if (timeLeft < 180 && globalTime % 20 < 10) ctx.globalAlpha = 0.4;
-            
             ctx.save(); ctx.translate(box.x, box.y);
-            ctx.shadowBlur = 20 + glow; ctx.shadowColor = isLoot ? '#eab308' : '#38bdf8';
+            
+            // 優化: Fake Glow
+            ctx.fillStyle = 'rgba(234, 179, 8, 0.2)'; ctx.beginPath(); ctx.arc(0, -15, 30 + glow, 0, Math.PI*2); ctx.fill();
+
             ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(0, 0, 24, 12, 0, 0, Math.PI*2); ctx.fill();
-            
             let visualY = -15 - glow;
-            ctx.fillStyle = isLoot ? '#78350f' : '#1e3a8a'; ctx.fillRect(-20, visualY - 15, 40, 30);
-            ctx.fillStyle = isLoot ? '#f59e0b' : '#3b82f6'; ctx.fillRect(-22, visualY - 23, 44, 15);
-            ctx.fillStyle = isLoot ? '#fbbf24' : '#60a5fa'; ctx.fillRect(-5, visualY - 10, 10, 10);
-            ctx.shadowBlur = 0; 
-            
-            ctx.fillStyle = 'white'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; 
-            ctx.fillText(isLoot ? 'UP' : 'AMMO', 0, visualY - 30);
-            ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, visualY - 50, 10, -Math.PI/2, -Math.PI/2 + (timeLeft/600)*Math.PI*2); ctx.stroke();
+            ctx.fillStyle = '#78350f'; ctx.fillRect(-20, visualY - 15, 40, 30);
+            ctx.fillStyle = '#f59e0b'; ctx.fillRect(-22, visualY - 23, 44, 15);
+            ctx.fillStyle = '#fbbf24'; ctx.fillRect(-5, visualY - 10, 10, 10);
+            ctx.fillStyle = 'white'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center'; ctx.fillText('UP', 0, visualY - 30);
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, visualY - 50, 10, -Math.PI/2, -Math.PI/2 + (timeLeft/600) * Math.PI*2); ctx.stroke();
             ctx.restore(); ctx.globalAlpha = 1.0;
         } 
+        else if (item.type === 'ammoBox') {
+            let box = item.obj; let glow = Math.abs(Math.sin(box.pulse)) * 8; let timeLeft = 600 - (globalTime - box.spawnTime);
+            if (timeLeft < 180 && globalTime % 20 < 10) ctx.globalAlpha = 0.4;
+            ctx.save(); ctx.translate(box.x, box.y);
+
+            // 優化: Fake Glow
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.2)'; ctx.beginPath(); ctx.arc(0, -15, 30 + glow, 0, Math.PI*2); ctx.fill();
+
+            ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(0, 0, 20, 10, 0, 0, Math.PI*2); ctx.fill();
+            let visualY = -15 - glow;
+            ctx.fillStyle = '#1d4ed8'; ctx.fillRect(-18, visualY - 12, 36, 24); 
+            ctx.fillStyle = '#3b82f6'; ctx.fillRect(-20, visualY - 20, 40, 12);
+            ctx.fillStyle = '#60a5fa'; ctx.fillRect(-5, visualY - 8, 10, 8);
+            ctx.fillStyle = 'white'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center'; ctx.fillText('AMMO', 0, visualY - 25);
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, visualY - 40, 8, -Math.PI/2, -Math.PI/2 + (timeLeft/600) * Math.PI*2); ctx.stroke();
+            ctx.restore(); ctx.globalAlpha = 1.0;
+        }
         else if (item.type === 'enemy') {
-            let e = item.obj; let isFacingRight = player.x > e.x; let bob = Math.abs(Math.sin(globalTime*0.1*e.speed + e.bobPhase)) * (e.size*0.15);
+            let e = item.obj; let isFacingRight = player.x > e.x; let bob = Math.abs(Math.sin(globalTime * 0.1 * e.speed + (e.x*0.01))) * (e.size * 0.15);
             ctx.save(); ctx.translate(e.x, e.y); 
             ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0, 0, e.size*0.5, e.size*0.2, 0, 0, Math.PI*2); ctx.fill();
-            
             let visualY = -10 - bob;
-            
             ctx.fillStyle = e.color; ctx.beginPath();
             ctx.arc(0, visualY - e.size*0.4, e.size*0.45, Math.PI, 0); 
             ctx.lineTo(e.size*0.45, visualY + e.size*0.1); ctx.lineTo(-e.size*0.45, visualY + e.size*0.1); ctx.fill();
-            
-            if (e.tier <= 2) {
+            if (e.tier === 1 || e.tier === 2) {
                 ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 3;
                 ctx.beginPath(); ctx.moveTo(-e.size*0.4, visualY - e.size*0.1); ctx.lineTo(e.size*0.4, visualY); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(-e.size*0.4, visualY - e.size*0.3); ctx.lineTo(e.size*0.4, visualY - e.size*0.2); ctx.stroke();
@@ -693,7 +979,6 @@ function draw() {
                 ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(-20, visualY - e.size*0.4); ctx.lineTo(-25, visualY - e.size*0.6); ctx.lineTo(0, visualY - e.size*0.5); ctx.lineTo(25, visualY - e.size*0.6); ctx.lineTo(20, visualY - e.size*0.4); ctx.fill();
             }
             ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.stroke();
-            
             let eyeOffsetX = isFacingRight ? e.size*0.15 : -e.size*0.15;
             ctx.fillStyle = e.tier >= 3 ? '#ef4444' : 'white';
             ctx.beginPath(); ctx.arc(eyeOffsetX - e.size*0.15, visualY - e.size*0.3, e.size*0.08, 0, Math.PI*2); ctx.fill();
@@ -702,16 +987,18 @@ function draw() {
             ctx.beginPath(); ctx.arc(eyeOffsetX - e.size*0.15 + (isFacingRight?1:-1), visualY - e.size*0.3, e.size*0.04, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(eyeOffsetX + e.size*0.15 + (isFacingRight?1:-1), visualY - e.size*0.3, e.size*0.04, 0, Math.PI*2); ctx.fill();
             
-            ctx.fillStyle = 'white'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center'; ctx.fillText(`Lv.${e.tier}`, 0, visualY - e.size*0.9 - 10);
-            let hpBarWidth = e.tier === 5 ? 80 : 40; ctx.fillStyle = '#334155'; ctx.fillRect(-hpBarWidth/2, visualY - e.size*0.7 - 15, hpBarWidth, 6);
-            ctx.fillStyle = '#ef4444'; ctx.fillRect(-hpBarWidth/2, visualY - e.size*0.7 - 15, hpBarWidth * (e.hp / e.maxHp), 6);
+            // Fake shadow text for performance
+            ctx.fillStyle = 'black'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center'; ctx.fillText(`Lv.${e.tier}`, 2, visualY - e.size*0.9 - 8);
+            ctx.fillStyle = 'white'; ctx.fillText(`Lv.${e.tier}`, 0, visualY - e.size*0.9 - 10);
+            
+            let hpBarWidth = e.tier === 5 ? 100 : 50; ctx.fillStyle = '#334155'; ctx.fillRect(-hpBarWidth/2, visualY - e.size*0.7 - 15, hpBarWidth, 8);
+            ctx.fillStyle = '#ef4444'; ctx.fillRect(-hpBarWidth/2, visualY - e.size*0.7 - 15, hpBarWidth * (e.hp / e.maxHp), 8);
             ctx.restore();
         }
         else if (item.type === 'player') {
             let p = item.obj; let isFacingRight = (rightJoy.active) ? (Math.abs(rightJoy.angle) < Math.PI/2) : (mouseX > p.x); let bob = p.isMoving ? Math.sin(globalTime * 0.5) * 4 : 0;
             ctx.save(); ctx.translate(p.x, p.y);
             ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0, 0, p.radius*1.2, p.radius*0.5, 0, 0, Math.PI*2); ctx.fill();
-            
             let visualY = -10 + bob; 
             
             let gunDrawLogic = () => {
@@ -721,13 +1008,10 @@ function draw() {
                 if (Math.abs(p.angle) > Math.PI/2) ctx.scale(1, -1);
                 ctx.fillStyle = '#1e293b'; ctx.fillRect(0 - p.recoilOffset, -4, 25, 8); 
                 ctx.fillStyle = '#475569'; ctx.fillRect(10 - p.recoilOffset, -2, 15, 4); 
-                ctx.shadowBlur = 10; ctx.shadowColor = wepColor; ctx.fillStyle = wepColor; ctx.fillRect(25 - p.recoilOffset, -3, 6, 6); 
-                ctx.shadowBlur = 0; ctx.restore();
+                ctx.fillStyle = wepColor; ctx.fillRect(25 - p.recoilOffset, -3, 6, 6); ctx.restore();
             };
             
-            let aimUp = Math.sin(p.angle || 0) < 0; 
-            if (aimUp) gunDrawLogic();
-            
+            let aimUp = Math.sin(p.angle || 0) < 0; if (aimUp) gunDrawLogic();
             ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.moveTo(-12, visualY - 10); ctx.lineTo(-20, visualY + 20); ctx.lineTo(20, visualY + 20); ctx.lineTo(12, visualY - 10); ctx.fill();
             let legSwing = p.isMoving ? Math.sin(globalTime * 0.8) * 8 : 0;
             ctx.fillStyle = '#475569'; ctx.fillRect(-8, visualY + 15 - legSwing, 6, 12); ctx.fillRect(2, visualY + 15 + legSwing, 6, 12);
@@ -750,14 +1034,24 @@ function draw() {
 
     for (let b of bullets) {
         ctx.save(); ctx.translate(b.x, b.y - 15); ctx.rotate(Math.atan2(b.vy, b.vx)); 
-        ctx.shadowBlur = 10; ctx.shadowColor = b.glow;
-        ctx.fillStyle = b.color; ctx.beginPath(); ctx.roundRect(-10, -b.radius/2, 20 + b.radius*2, b.radius, 5); ctx.fill();
+        // 優化: Fake Glow 代替 shadowBlur
+        ctx.globalAlpha = 0.4; ctx.fillStyle = b.glow; ctx.beginPath(); ctx.roundRect(-10, -b.radius, 20 + b.radius*4, b.radius*2, 5); ctx.fill();
+        ctx.globalAlpha = 1.0; ctx.fillStyle = b.color; ctx.beginPath(); ctx.roundRect(-10, -b.radius/2, 20 + b.radius*2, b.radius, 5); ctx.fill();
         ctx.restore();
     }
     
     for (let p of particles) { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); }
     ctx.globalAlpha = 1.0;
     
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (let text of floatingTexts) {
+        ctx.globalAlpha = text.life; ctx.font = `bold ${text.size}px Arial`;
+        // 優化: 移除 shadowBlur，改用繪製兩次文字模擬邊框
+        ctx.fillStyle = 'black'; ctx.fillText(text.text, text.x + 2, text.y + 2);
+        ctx.fillStyle = text.color; ctx.fillText(text.text, text.x, text.y);
+    }
+    ctx.globalAlpha = 1.0; ctx.restore(); 
+
     if (gameState === 'PLAYING' && ('ontouchstart' in window)) {
         const drawJoy = (joy, base) => {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; ctx.beginPath(); ctx.arc(base.x, base.y, joyRadius, 0, Math.PI*2); ctx.fill();
@@ -774,49 +1068,39 @@ function draw() {
         ctx.fillStyle = 'rgba(15, 23, 42, 0.9)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.textAlign = 'center';
         if (gameState === 'VICTORY') {
-            ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 60px Arial'; ctx.shadowBlur=20; ctx.shadowColor='#eab308'; ctx.fillText('MISSION ACCOMPLISHED!', gameCenterX, canvas.height/2 - 80);
-            ctx.fillStyle = 'white'; ctx.font = 'bold 24px Arial'; ctx.shadowBlur=0;
+            ctx.fillStyle = 'black'; ctx.font = 'bold 60px Arial'; ctx.fillText('MISSION ACCOMPLISHED!', gameCenterX + 3, canvas.height/2 - 77); // Fake shadow
+            ctx.fillStyle = '#fbbf24'; ctx.fillText('MISSION ACCOMPLISHED!', gameCenterX, canvas.height/2 - 80);
+            ctx.fillStyle = 'white'; ctx.font = 'bold 24px Arial'; 
             let finalWepName = player.weaponLevel >= 0 ? WEAPONS[player.weaponLevel].name : '無';
             ctx.fillText(`成功擊殺終極 Boss！ 最終武器: ${finalWepName}`, gameCenterX, canvas.height/2 - 10);
         } else {
-            ctx.fillStyle = '#ef4444'; ctx.font = 'bold 80px Arial'; ctx.shadowBlur=20; ctx.shadowColor='#ef4444'; ctx.fillText('YOU DIED', gameCenterX, canvas.height/2 - 80);
-            ctx.fillStyle = 'white'; ctx.font = 'bold 28px Arial'; ctx.shadowBlur=0;
+            ctx.fillStyle = 'black'; ctx.font = 'bold 80px Arial'; ctx.fillText('YOU DIED', gameCenterX + 4, canvas.height/2 - 76);
+            ctx.fillStyle = '#ef4444'; ctx.fillText('YOU DIED', gameCenterX, canvas.height/2 - 80);
+            ctx.fillStyle = 'white'; ctx.font = 'bold 28px Arial';
             ctx.fillText(`擊殺數: ${enemiesKilled} / ${TOTAL_MONSTERS}`, gameCenterX, canvas.height/2 - 10);
         }
+        
         ctx.globalAlpha = (globalTime % 60 < 30) ? 1 : 0.5; ctx.fillStyle = '#94a3b8'; ctx.font = '24px Arial';
         ctx.fillText('<< 請在左下方輸入資料上傳排行榜 >>', gameCenterX, canvas.height/2 + 60); 
-        ctx.fillText('或按 [Enter] 重玩', gameCenterX, canvas.height/2 + 100); ctx.globalAlpha = 1.0;
+        ctx.fillText('或按 [Enter] 重新挑戰', gameCenterX, canvas.height/2 + 100); ctx.globalAlpha = 1.0;
     }
-    ctx.restore();
 }
 
-// ==========================================
-// 🚀 核心啟動 (完美還原 V19 成功連線模式)
-// ==========================================
 async function loadGameData() {
-    const loader = document.getElementById('loading-screen');
-    const startMenu = document.getElementById('start-menu');
-    if (loader) loader.style.display = 'none';
-    if (startMenu) startMenu.style.display = 'flex';
-    gameState = 'START_MENU';
-
+    const timestamp = new Date().getTime();
     if (GAS_WEB_APP_URL) {
         try {
-            // **完美還原 V19 的讀取方式，不加 timestamp 防止 GAS 出錯**
-            let res = await fetch(GAS_WEB_APP_URL);
+            let res = await fetch(`${GAS_WEB_APP_URL}?t=${timestamp}`); 
             let data = await res.json();
-            
             if (data.weapons && data.weapons.length > 1) {
                 let rows = data.weapons;
+                if (rows[1].length > 9 && rows[1][9]) { let val = parseFloat(rows[1][9]); if (!isNaN(val) && val > 0) lootBoxSpawnInterval = Math.floor(val * 60); }
+                if (rows[1].length > 10 && rows[1][10]) { let val = parseFloat(rows[1][10]); if (!isNaN(val) && val > 0) ammoBoxSpawnInterval = Math.floor(val * 60); }
                 for(let i=1; i<rows.length; i++) {
                     if (rows[i].length >= 7 && WEAPONS[i-1]) {
-                        WEAPONS[i-1].name = String(rows[i][1]).trim() || WEAPONS[i-1].name;
-                        WEAPONS[i-1].damage = parseFloat(rows[i][2]) || WEAPONS[i-1].damage;
-                        WEAPONS[i-1].bullets = parseInt(rows[i][3]) || WEAPONS[i-1].bullets;
-                        WEAPONS[i-1].fireRate = parseInt(rows[i][4]) || WEAPONS[i-1].fireRate;
-                        if(rows[i].length >= 6) WEAPONS[i-1].playerSpeed = parseFloat(rows[i][5]) || WEAPONS[i-1].playerSpeed;
-                        if(rows[i].length >= 7) WEAPONS[i-1].reloadAmmo = parseInt(rows[i][6]) || WEAPONS[i-1].reloadAmmo;
-                        if(rows[i].length >= 8) WEAPONS[i-1].magCapacity = parseInt(rows[i][7]) || WEAPONS[i-1].magCapacity;
+                        WEAPONS[i-1].name = String(rows[i][1]).trim() || WEAPONS[i-1].name; WEAPONS[i-1].damage = parseFloat(rows[i][2]) || WEAPONS[i-1].damage; WEAPONS[i-1].bullets = parseInt(rows[i][3]) || WEAPONS[i-1].bullets;
+                        WEAPONS[i-1].fireRate = parseInt(rows[i][4]) || WEAPONS[i-1].fireRate; WEAPONS[i-1].playerSpeed = parseFloat(rows[i][5]) || WEAPONS[i-1].playerSpeed; WEAPONS[i-1].reloadAmmo = parseInt(rows[i][6]) || WEAPONS[i-1].reloadAmmo;
+                        WEAPONS[i-1].magCapacity = parseInt(rows[i][7]) || WEAPONS[i-1].magCapacity; WEAPONS[i-1].ammoBoxRefill = parseInt(rows[i][8]) || WEAPONS[i-1].ammoBoxRefill;
                     }
                 }
             }
@@ -824,36 +1108,25 @@ async function loadGameData() {
                 let rows = data.monsters;
                 for(let i=1; i<rows.length; i++) {
                     if (rows[i].length >= 5 && MONSTER_BASE[i-1]) {
-                        MONSTER_BASE[i-1].hp = parseFloat(rows[i][3]) || MONSTER_BASE[i-1].hp;
-                        MONSTER_BASE[i-1].speed = parseFloat(rows[i][4]) || MONSTER_BASE[i-1].speed;
+                        MONSTER_BASE[i-1].name = String(rows[i][1]).trim() || MONSTER_BASE[i-1].name; MONSTER_BASE[i-1].count = parseInt(rows[i][2]) || MONSTER_BASE[i-1].count;
+                        MONSTER_BASE[i-1].hp = parseFloat(rows[i][3]) || MONSTER_BASE[i-1].hp; MONSTER_BASE[i-1].speed = parseFloat(rows[i][4]) || MONSTER_BASE[i-1].speed;
                     }
                 }
             }
-            console.log("雲端數值同步完成");
-            // 同步完後若玩家還沒開始遊戲，重新計算總怪物數量
-            if (gameState === 'START_MENU') initMonsterQueue();
-        } catch(e) {
-            console.warn("使用本地數值 (連線異常)", e);
-        }
+        } catch(e) { console.error("載入數據失敗，使用本地預設值:", e); }
     }
+    document.getElementById('loading-screen').style.display = 'none';
+    
+    // 進入選單畫面
+    let menu = document.getElementById('start-menu');
+    if (menu) menu.style.display = 'flex';
+    gameState = 'START_MENU';
     gameLoop(); 
 }
 
 function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
-
-// 保險啟動，防止任何原因卡死
-setTimeout(() => {
-    if (gameState !== 'PLAYING' && gameState !== 'START_MENU' && gameState !== 'MATH_TIME') {
-        const loader = document.getElementById('loading-screen');
-        if (loader && loader.style.display !== 'none') {
-            loader.style.display = 'none';
-            document.getElementById('start-menu').style.display = 'flex';
-            gameState = 'START_MENU';
-        }
-    }
-}, 3000);
-
 loadGameData();
+
 </script>
 
 </body>
