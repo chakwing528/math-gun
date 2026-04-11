@@ -3,25 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Math Survival - V41</title>
+    <title>Math Survival - V42</title>
     
+    <!-- 指向你整理好的 CSS 檔案 -->
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
-    <style>
-        /* 確保載入畫面與選單在最上方 */
-        #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #0f172a; color: #fbbf24; display: flex;
-            align-items: center; justify-content: center; z-index: 9999;
-            font-family: Arial, sans-serif; font-size: 24px; font-weight: bold;
-        }
-        #start-menu {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(15, 23, 42, 0.95); display: none; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 500; gap: 20px;
-        }
-    </style>
 </head>
 <body>
 
@@ -36,7 +22,7 @@
 
     <div id="loading-screen">系統初始化中...</div>
     
-    <div id="start-menu">
+    <div id="start-menu" style="display: none;">
         <h1 style="color: #fbbf24; font-size: 40px; margin-bottom: 30px; text-shadow: 2px 2px 4px #000; text-align: center;">請選擇目標等級</h1>
         <button class="diff-btn" onclick="safeStart('S1')">S1 程度</button>
         <button class="diff-btn" onclick="safeStart('S2')">S2 程度</button>
@@ -90,12 +76,12 @@
             </div>
         </div>
 
-        <div style="color: rgba(255, 255, 255, 0.5); font-weight: bold; font-size: 14px; margin-top: auto; padding-left: 5px;">V41</div>
+        <div style="color: rgba(255, 255, 255, 0.5); font-weight: bold; font-size: 14px; margin-top: auto; padding-left: 5px;">V42</div>
     </div>
 
 <script>
 // ============================================================================
-// 🎮 V41 畫質還原與終極穩定單檔版 - 保證絕不卡死！
+// 🎮 V42 終極穩定版 (連線修復 & 畫風還原)
 // ============================================================================
 
 // 🌐 API 設定
@@ -144,15 +130,15 @@ let MONSTER_BASE = [
 ];
 
 const WEAPONS = [
-    { level: 1, name: "Lv.1 基礎手槍", damage: 1, bullets: 1, fireRate: 15, playerSpeed: 4, reloadAmmo: 30, magCapacity: 30, color: '#fde047', glow: '#ca8a04', recoil: 4, speed: 12 },
-    { level: 2, name: "Lv.2 雙發衝鋒", damage: 1, bullets: 1, fireRate: 12, playerSpeed: 5, reloadAmmo: 30, magCapacity: 30, color: '#60a5fa', glow: '#2563eb', recoil: 5, speed: 14 },
-    { level: 3, name: "Lv.3 散彈速射", damage: 1, bullets: 2, fireRate: 8, playerSpeed: 6, reloadAmmo: 40, magCapacity: 30, color: '#34d399', glow: '#059669', recoil: 6, speed: 16 },
-    { level: 4, name: "Lv.4 脈衝步槍", damage: 2, bullets: 2, fireRate: 8, playerSpeed: 7, reloadAmmo: 40, magCapacity: 30, color: '#f472b6', glow: '#db2777', recoil: 7, speed: 18 },
-    { level: 5, name: "Lv.5 穿甲重砲", damage: 2, bullets: 3, fireRate: 6, playerSpeed: 8, reloadAmmo: 50, magCapacity: 30, color: '#a78bfa', glow: '#7c3aed', recoil: 8, speed: 20, penetrate: true },
-    { level: 6, name: "Lv.6 散射激光", damage: 3, bullets: 3, fireRate: 6, playerSpeed: 9, reloadAmmo: 50, magCapacity: 30, color: '#fb923c', glow: '#ea580c', recoil: 10, speed: 22 },
-    { level: 7, name: "Lv.7 電漿風暴", damage: 3, bullets: 4, fireRate: 2, playerSpeed: 10, reloadAmmo: 60, magCapacity: 30, color: '#38bdf8', glow: '#0284c7', recoil: 12, speed: 25, penetrate: true },
-    { level: 8, name: "Lv.8 終極殲滅", damage: 4, bullets: 4, fireRate: 2, playerSpeed: 10, reloadAmmo: 60, magCapacity: 30, color: '#ffffff', glow: '#fef08a', recoil: 14, speed: 28, penetrate: true },
-    { level: 9, name: "Lv.MAX 神話武器", damage: 5, bullets: 5, fireRate: 1, playerSpeed: 10, reloadAmmo: 100, magCapacity: 30, color: '#ef4444', glow: '#b91c1c', recoil: 16, speed: 30, penetrate: true }
+    { level: 1, name: "Lv.1 基礎手槍", damage: 1, bullets: 1, fireRate: 15, playerSpeed: 4, reloadAmmo: 30, magCapacity: 30, ammoBoxRefill: 30, color: '#fde047', glow: '#ca8a04', recoil: 4, speed: 12 },
+    { level: 2, name: "Lv.2 雙發衝鋒", damage: 1, bullets: 1, fireRate: 12, playerSpeed: 5, reloadAmmo: 30, magCapacity: 30, ammoBoxRefill: 30, color: '#60a5fa', glow: '#2563eb', recoil: 5, speed: 14 },
+    { level: 3, name: "Lv.3 散彈速射", damage: 1, bullets: 2, fireRate: 8, playerSpeed: 6, reloadAmmo: 40, magCapacity: 30, ammoBoxRefill: 40, color: '#34d399', glow: '#059669', recoil: 6, speed: 16 },
+    { level: 4, name: "Lv.4 脈衝步槍", damage: 2, bullets: 2, fireRate: 8, playerSpeed: 7, reloadAmmo: 40, magCapacity: 30, ammoBoxRefill: 40, color: '#f472b6', glow: '#db2777', recoil: 7, speed: 18 },
+    { level: 5, name: "Lv.5 穿甲重砲", damage: 2, bullets: 3, fireRate: 6, playerSpeed: 8, reloadAmmo: 50, magCapacity: 30, ammoBoxRefill: 50, color: '#a78bfa', glow: '#7c3aed', recoil: 8, speed: 20, penetrate: true },
+    { level: 6, name: "Lv.6 散射激光", damage: 3, bullets: 3, fireRate: 6, playerSpeed: 9, reloadAmmo: 50, magCapacity: 30, ammoBoxRefill: 50, color: '#fb923c', glow: '#ea580c', recoil: 10, speed: 22 },
+    { level: 7, name: "Lv.7 電漿風暴", damage: 3, bullets: 4, fireRate: 2, playerSpeed: 10, reloadAmmo: 60, magCapacity: 30, ammoBoxRefill: 60, color: '#38bdf8', glow: '#0284c7', recoil: 12, speed: 25, penetrate: true },
+    { level: 8, name: "Lv.8 終極殲滅", damage: 4, bullets: 4, fireRate: 2, playerSpeed: 10, reloadAmmo: 60, magCapacity: 30, ammoBoxRefill: 60, color: '#ffffff', glow: '#fef08a', recoil: 14, speed: 28, penetrate: true },
+    { level: 9, name: "Lv.MAX 神話武器", damage: 5, bullets: 5, fireRate: 1, playerSpeed: 10, reloadAmmo: 100, magCapacity: 30, ammoBoxRefill: 100, color: '#ef4444', glow: '#b91c1c', recoil: 16, speed: 30, penetrate: true }
 ];
 
 let player = {
@@ -175,7 +161,6 @@ function initAudio() {
     }
 }
 
-// 網頁失去焦點時自動靜音
 document.addEventListener('visibilitychange', () => {
     let bgm = document.getElementById('bgm');
     if (!bgm) return;
@@ -246,11 +231,19 @@ function drawHUDIcons() {
 }
 setTimeout(drawHUDIcons, 100);
 
+function initMonsterQueue() {
+    monsterQueue = []; TOTAL_MONSTERS = 0; monstersLeft = [0, 0, 0, 0, 0, 0];
+    for (let m of MONSTER_BASE) {
+        for(let i=0; i<m.count; i++) monsterQueue.push({...m});
+        TOTAL_MONSTERS += m.count; monstersLeft[m.tier] += m.count; 
+    }
+}
+
 // ==========================================
-// 🚀 遊戲狀態與連線邏輯
+// 🚀 遊戲狀態與連線邏輯 (修復 V42)
 // ==========================================
 
-function fetchLeaderboard() {
+async function fetchLeaderboard() {
     const list = document.getElementById('leaderboard-list');
     if(!list) return;
     if (!GAS_WEB_APP_URL) {
@@ -258,25 +251,27 @@ function fetchLeaderboard() {
         return;
     }
     list.innerHTML = "<li>載入中...</li>";
-    fetch(`${GAS_WEB_APP_URL}?action=getLeaderboard&t=${Date.now()}`)
-        .then(res => res.json())
-        .then(data => {
-            list.innerHTML = "";
-            if (!data || data.length === 0) { list.innerHTML = "<li>暫無數據</li>"; return; }
-            data.forEach(item => {
-                let li = document.createElement('li');
-                let safeName = item.name.length > 6 ? item.name.substring(0, 6) + '..' : item.name;
-                li.textContent = `${item.cls} ${safeName} - ${item.score}分 (${item.diff})`;
-                if (item.isMe) { li.style.backgroundColor = "rgba(46, 204, 113, 0.4)"; li.style.borderRadius = "4px"; }
-                list.appendChild(li);
-            });
-        }).catch(e => {
-            console.log("LB 獲取失敗", e);
-            list.innerHTML = "<li>載入失敗</li>";
+    try {
+        const timestamp = new Date().getTime();
+        // 獲取排行榜需要 action 參數
+        let res = await fetch(`${GAS_WEB_APP_URL}?action=getLeaderboard&t=${timestamp}`);
+        let data = await res.json();
+        list.innerHTML = "";
+        if (!data || data.length === 0) { list.innerHTML = "<li>暫無數據</li>"; return; }
+        data.forEach(item => {
+            let li = document.createElement('li');
+            let safeName = item.name && item.name.length > 6 ? item.name.substring(0, 6) + '..' : (item.name || '未知');
+            li.textContent = `${item.cls || ''} ${safeName} - ${item.score || 0}分 (${item.diff || 'S1'})`;
+            if (item.isMe) { li.style.backgroundColor = "rgba(46, 204, 113, 0.4)"; li.style.borderRadius = "4px"; }
+            list.appendChild(li);
         });
+    } catch(e) {
+        console.log("LB 獲取失敗", e);
+        list.innerHTML = "<li>載入失敗，請檢查網路設定</li>";
+    }
 }
 
-function submitScore() {
+async function submitScore() {
     const cls = document.getElementById('lb-class').value.trim();
     const sid = document.getElementById('lb-sid').value.trim();
     const name = document.getElementById('lb-name').value.trim();
@@ -284,13 +279,27 @@ function submitScore() {
 
     scoreSubmitted = true;
     document.getElementById('submit-form').style.display = 'none';
-    document.getElementById('leaderboard-list').innerHTML = "<li>上傳中...</li>";
+    document.getElementById('leaderboard-list').innerHTML = "<li>資料上傳中...</li>";
 
-    const addUrl = `${GAS_WEB_APP_URL}?action=addScore&diff=${currentDifficulty}&cls=${cls}&sid=${sid}&name=${name}&score=${enemiesKilled}&t=${Date.now()}`;
-    fetch(addUrl).then(()=>fetchLeaderboard()).catch(()=>{});
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('zh-HK');
+    const timeStr = now.toLocaleTimeString('zh-HK');
+    const diff = currentDifficulty; 
+    const score = enemiesKilled;
+    const timestamp = now.getTime();
+
+    // 完全還原成功寫入版的 URL 參數 (加入 date 和 time)
+    const addUrl = `${GAS_WEB_APP_URL}?action=addScore&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}&diff=${encodeURIComponent(diff)}&cls=${encodeURIComponent(cls)}&sid=${encodeURIComponent(sid)}&name=${encodeURIComponent(name)}&score=${score}&t=${timestamp}`;
+    
+    try {
+        await fetch(addUrl);
+        setTimeout(() => fetchLeaderboard(), 1000); // 確保 GAS 處理完成後再拉取
+    } catch(e) {
+        console.error("上傳發生延遲/錯誤", e);
+        fetchLeaderboard();
+    }
 }
 
-// 🛡️ 安全啟動函數 (防卡死)
 window.safeStart = function(level) {
     try { initAudio(); } catch(e) {}
     currentDifficulty = level;
@@ -315,17 +324,12 @@ function resetGame() {
     isShooting = false; keys.w = keys.a = keys.s = keys.d = false;
     leftJoy.active = false; rightJoy.active = false;
     globalTime = 0; bossAlarmTimer = 0; scoreSubmitted = false;
-    player.angle = 0; // 避免 angle 為 NaN
+    player.angle = 0; 
     
     document.getElementById('submit-form').style.display = 'none';
     
-    monsterQueue = []; TOTAL_MONSTERS = 0; monstersLeft = [0, 0, 0, 0, 0, 0];
-    MONSTER_BASE.forEach(m => {
-        for(let i=0; i<m.count; i++) monsterQueue.push({...m});
-        TOTAL_MONSTERS += m.count; monstersLeft[m.tier] += m.count; 
-    });
-    
-    fetchLeaderboard();
+    initMonsterQueue();
+    fetchLeaderboard(); // 確保開局拉取最新排行榜
     gameState = 'PLAYING';
     
     // 開局立即生成武器箱
@@ -355,7 +359,6 @@ function triggerMath(type) {
     let qLevel = currentDifficulty === 'S3' ? '3' : (currentDifficulty === 'S2' ? '2' : '1');
     let qData;
 
-    // 嘗試調用外部題庫 indices.js
     if (typeof generateIndicesQuestions === 'function') {
         try { 
             let qList = generateIndicesQuestions(1, qLevel);
@@ -511,16 +514,16 @@ function update() {
 
     if (gameState === 'MATH_TIME') {
         mathTimer--;
-        let bar = document.getElementById('math-timer-bar');
-        if (bar) {
-            bar.style.width = (mathTimer/600*100)+'%';
-            bar.style.backgroundColor = mathTimer < 180 ? '#ef4444' : '#4ade80';
+        if (uiElements.mathTimerBar) {
+            uiElements.mathTimerBar.style.width = (mathTimer/600*100)+'%';
+            uiElements.mathTimerBar.style.backgroundColor = mathTimer < 180 ? '#ef4444' : '#4ade80';
         }
         if (mathTimer <= 0) closeMathOverlay(false);
     }
     if (gameState !== 'PLAYING') return;
 
     if (player.recoilOffset > 0) player.recoilOffset *= 0.8; 
+    if (bossAlarmTimer > 0) bossAlarmTimer--;
 
     for (let i=particles.length-1; i>=0; i--) {
         particles[i].x += particles[i].vx; particles[i].y += particles[i].vy; particles[i].life -= particles[i].decay;
@@ -632,6 +635,11 @@ function draw() {
     for(let i=0; i<canvas.width; i+=80) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
     for(let i=0; i<canvas.height; i+=80) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
 
+    if (bossAlarmTimer > 0) {
+        ctx.fillStyle = `rgba(220, 38, 38, ${Math.abs(Math.sin(bossAlarmTimer*0.1))*0.4})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
     let drawables = [];
     if (player.hp > 0) drawables.push({ type: 'player', y: player.y, obj: player });
     for (let e of enemies) drawables.push({ type: 'enemy', y: e.y, obj: e });
@@ -705,6 +713,7 @@ function draw() {
             ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0, 0, p.radius*1.2, p.radius*0.5, 0, 0, Math.PI*2); ctx.fill();
             
             let visualY = -10 + bob; 
+            
             let gunDrawLogic = () => {
                 if (player.weaponLevel === -1) return;
                 let wepColor = WEAPONS[player.weaponLevel] ? WEAPONS[player.weaponLevel].color : '#fff';
@@ -727,13 +736,13 @@ function draw() {
             ctx.fillStyle = '#fcd34d'; ctx.beginPath(); ctx.arc(0, visualY - 25, 16, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#cbd5e1'; ctx.beginPath(); ctx.arc(0, visualY - 28, 17, Math.PI, 0); ctx.fill(); ctx.fillRect(-18, visualY - 28, 36, 6); 
             ctx.fillStyle = '#b91c1c'; ctx.fillRect(-3, visualY - 48, 6, 12);
-            
             let eyeX = Math.cos(p.angle || 0) * 3; let eyeY = Math.sin(p.angle || 0) * 3;
             ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(-5 + eyeX, visualY - 23 + eyeY, 3, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(5 + eyeX, visualY - 23 + eyeY, 3, 0, Math.PI*2); ctx.fill();
             
             if (player.weaponLevel >= 0) {
                 ctx.fillStyle = '#fcd34d'; ctx.beginPath(); ctx.arc(Math.cos(p.angle || 0)*10 - p.recoilOffset, visualY - 5 + Math.sin(p.angle || 0)*10, 5, 0, Math.PI*2); ctx.fill();
             }
+            
             if (!aimUp) gunDrawLogic(); 
             ctx.restore();
         }
@@ -749,14 +758,6 @@ function draw() {
     for (let p of particles) { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); }
     ctx.globalAlpha = 1.0;
     
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    for (let text of floatingTexts) {
-        ctx.globalAlpha = text.life; ctx.font = `bold ${text.size}px Arial`;
-        ctx.fillStyle = 'black'; ctx.fillText(text.text, text.x + 2, text.y + 2);
-        ctx.fillStyle = text.color; ctx.fillText(text.text, text.x, text.y);
-    }
-    ctx.globalAlpha = 1.0; ctx.restore(); 
-
     if (gameState === 'PLAYING' && ('ontouchstart' in window)) {
         const drawJoy = (joy, base) => {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; ctx.beginPath(); ctx.arc(base.x, base.y, joyRadius, 0, Math.PI*2); ctx.fill();
@@ -773,83 +774,84 @@ function draw() {
         ctx.fillStyle = 'rgba(15, 23, 42, 0.9)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.textAlign = 'center';
         if (gameState === 'VICTORY') {
-            ctx.fillStyle = 'black'; ctx.font = 'bold 60px Arial'; ctx.fillText('MISSION ACCOMPLISHED!', gameCenterX + 3, canvas.height/2 - 77); 
-            ctx.fillStyle = '#fbbf24'; ctx.fillText('MISSION ACCOMPLISHED!', gameCenterX, canvas.height/2 - 80);
-            ctx.fillStyle = 'white'; ctx.font = 'bold 24px Arial'; 
+            ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 60px Arial'; ctx.shadowBlur=20; ctx.shadowColor='#eab308'; ctx.fillText('MISSION ACCOMPLISHED!', gameCenterX, canvas.height/2 - 80);
+            ctx.fillStyle = 'white'; ctx.font = 'bold 24px Arial'; ctx.shadowBlur=0;
             let finalWepName = player.weaponLevel >= 0 ? WEAPONS[player.weaponLevel].name : '無';
             ctx.fillText(`成功擊殺終極 Boss！ 最終武器: ${finalWepName}`, gameCenterX, canvas.height/2 - 10);
         } else {
-            ctx.fillStyle = 'black'; ctx.font = 'bold 80px Arial'; ctx.fillText('YOU DIED', gameCenterX + 4, canvas.height/2 - 76);
-            ctx.fillStyle = '#ef4444'; ctx.fillText('YOU DIED', gameCenterX, canvas.height/2 - 80);
-            ctx.fillStyle = 'white'; ctx.font = 'bold 28px Arial';
+            ctx.fillStyle = '#ef4444'; ctx.font = 'bold 80px Arial'; ctx.shadowBlur=20; ctx.shadowColor='#ef4444'; ctx.fillText('YOU DIED', gameCenterX, canvas.height/2 - 80);
+            ctx.fillStyle = 'white'; ctx.font = 'bold 28px Arial'; ctx.shadowBlur=0;
             ctx.fillText(`擊殺數: ${enemiesKilled} / ${TOTAL_MONSTERS}`, gameCenterX, canvas.height/2 - 10);
         }
-        
         ctx.globalAlpha = (globalTime % 60 < 30) ? 1 : 0.5; ctx.fillStyle = '#94a3b8'; ctx.font = '24px Arial';
         ctx.fillText('<< 請在左下方輸入資料上傳排行榜 >>', gameCenterX, canvas.height/2 + 60); 
-        ctx.fillText('或按 [Enter] 返回主選單', gameCenterX, canvas.height/2 + 100); ctx.globalAlpha = 1.0;
+        ctx.fillText('或按 [Enter] 重玩', gameCenterX, canvas.height/2 + 100); ctx.globalAlpha = 1.0;
     }
+    ctx.restore();
 }
 
 // ==========================================
-// 🚀 非阻塞核心啟動 (保證絕不卡載入畫面)
+// 🚀 核心啟動 (完美還原 V19 成功連線模式)
 // ==========================================
-function loadGameData() {
-    // 立即顯示選單
+async function loadGameData() {
     const loader = document.getElementById('loading-screen');
     const startMenu = document.getElementById('start-menu');
     if (loader) loader.style.display = 'none';
     if (startMenu) startMenu.style.display = 'flex';
     gameState = 'START_MENU';
 
-    // 背景下載數據
     if (GAS_WEB_APP_URL) {
-        fetch(`${GAS_WEB_APP_URL}?t=${Date.now()}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.weapons && data.weapons.length > 1) {
-                    let rows = data.weapons;
-                    for(let i=1; i<rows.length; i++) {
-                        if (rows[i].length >= 7 && WEAPONS[i-1]) {
-                            WEAPONS[i-1].name = String(rows[i][1]).trim() || WEAPONS[i-1].name;
-                            WEAPONS[i-1].damage = parseFloat(rows[i][2]) || WEAPONS[i-1].damage;
-                            WEAPONS[i-1].bullets = parseInt(rows[i][3]) || WEAPONS[i-1].bullets;
-                            WEAPONS[i-1].fireRate = parseInt(rows[i][4]) || WEAPONS[i-1].fireRate;
-                            if(rows[i].length >= 6) WEAPONS[i-1].playerSpeed = parseFloat(rows[i][5]) || WEAPONS[i-1].playerSpeed;
-                            if(rows[i].length >= 7) WEAPONS[i-1].reloadAmmo = parseInt(rows[i][6]) || WEAPONS[i-1].reloadAmmo;
-                            if(rows[i].length >= 8) WEAPONS[i-1].magCapacity = parseInt(rows[i][7]) || WEAPONS[i-1].magCapacity;
-                            if(rows[i].length >= 9) WEAPONS[i-1].ammoBoxRefill = parseInt(rows[i][8]) || WEAPONS[i-1].ammoBoxRefill;
-                        }
+        try {
+            // **完美還原 V19 的讀取方式，不加 timestamp 防止 GAS 出錯**
+            let res = await fetch(GAS_WEB_APP_URL);
+            let data = await res.json();
+            
+            if (data.weapons && data.weapons.length > 1) {
+                let rows = data.weapons;
+                for(let i=1; i<rows.length; i++) {
+                    if (rows[i].length >= 7 && WEAPONS[i-1]) {
+                        WEAPONS[i-1].name = String(rows[i][1]).trim() || WEAPONS[i-1].name;
+                        WEAPONS[i-1].damage = parseFloat(rows[i][2]) || WEAPONS[i-1].damage;
+                        WEAPONS[i-1].bullets = parseInt(rows[i][3]) || WEAPONS[i-1].bullets;
+                        WEAPONS[i-1].fireRate = parseInt(rows[i][4]) || WEAPONS[i-1].fireRate;
+                        if(rows[i].length >= 6) WEAPONS[i-1].playerSpeed = parseFloat(rows[i][5]) || WEAPONS[i-1].playerSpeed;
+                        if(rows[i].length >= 7) WEAPONS[i-1].reloadAmmo = parseInt(rows[i][6]) || WEAPONS[i-1].reloadAmmo;
+                        if(rows[i].length >= 8) WEAPONS[i-1].magCapacity = parseInt(rows[i][7]) || WEAPONS[i-1].magCapacity;
                     }
                 }
-                if (data.monsters && data.monsters.length > 1) {
-                    let rows = data.monsters;
-                    for(let i=1; i<rows.length; i++) {
-                        if (rows[i].length >= 5 && MONSTER_BASE[i-1]) {
-                            MONSTER_BASE[i-1].hp = parseFloat(rows[i][3]) || MONSTER_BASE[i-1].hp;
-                            MONSTER_BASE[i-1].speed = parseFloat(rows[i][4]) || MONSTER_BASE[i-1].speed;
-                        }
+            }
+            if (data.monsters && data.monsters.length > 1) {
+                let rows = data.monsters;
+                for(let i=1; i<rows.length; i++) {
+                    if (rows[i].length >= 5 && MONSTER_BASE[i-1]) {
+                        MONSTER_BASE[i-1].hp = parseFloat(rows[i][3]) || MONSTER_BASE[i-1].hp;
+                        MONSTER_BASE[i-1].speed = parseFloat(rows[i][4]) || MONSTER_BASE[i-1].speed;
                     }
                 }
-                // 若玩家還在主選單，重新生成怪物隊列以應用最新血量
-                if (gameState === 'START_MENU') initMonsterQueue();
-                console.log("雲端數值同步完成");
-            }).catch(e => console.warn("使用本地數值"));
+            }
+            console.log("雲端數值同步完成");
+            // 同步完後若玩家還沒開始遊戲，重新計算總怪物數量
+            if (gameState === 'START_MENU') initMonsterQueue();
+        } catch(e) {
+            console.warn("使用本地數值 (連線異常)", e);
+        }
     }
     gameLoop(); 
 }
 
 function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
 
-// 啟動防卡死雙重保險
+// 保險啟動，防止任何原因卡死
 setTimeout(() => {
-    const loader = document.getElementById('loading-screen');
-    if (loader && loader.style.display !== 'none') {
-        loader.style.display = 'none';
-        document.getElementById('start-menu').style.display = 'flex';
-        gameState = 'START_MENU';
+    if (gameState !== 'PLAYING' && gameState !== 'START_MENU' && gameState !== 'MATH_TIME') {
+        const loader = document.getElementById('loading-screen');
+        if (loader && loader.style.display !== 'none') {
+            loader.style.display = 'none';
+            document.getElementById('start-menu').style.display = 'flex';
+            gameState = 'START_MENU';
+        }
     }
-}, 2000);
+}, 3000);
 
 loadGameData();
 </script>
