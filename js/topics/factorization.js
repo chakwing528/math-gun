@@ -19,10 +19,21 @@ function generateFactorizationQuestions(num, levelPref) {
     for (let i = 0; i < num; i++) {
         let levelType = levelPref;
         if (levelPref === 'mixed') {
-            const types = ['1', '2a', '2b', '3a', '3b'];
+            const types = ['1', '2', '3'];
             levelType = types[getRandomInt(0, types.length)];
         } else {
             levelType = String(levelPref).toLowerCase();
+        }
+        
+        let subType = Math.random() > 0.5 ? 'a' : 'b'; 
+
+        // 為了相容可能從舊 URL 或暫存傳來的舊設定
+        if (levelType === '2a' || levelType === '2b') {
+            subType = levelType.charAt(1);
+            levelType = '2';
+        } else if (levelType === '3a' || levelType === '3b') {
+            subType = levelType.charAt(1);
+            levelType = '3';
         }
         
         let qObj = { id: i + 1, topic: "因式分解 (Factorization)" };
@@ -59,8 +70,8 @@ function generateFactorizationQuestions(num, levelPref) {
             ];
             qObj.options = shuffleArray(options).map((opt, idx) => ({...opt, id: String.fromCharCode(65 + idx)}));
 
-        } else if (levelType === '2a') {
-            qObj.level = "⭐⭐ 程度 2A";
+        } else if (levelType === '2' && subType === 'a') {
+            qObj.level = "⭐⭐ 程度 2";
             let type = getRandomInt(0, 2); 
             const v = singleVars[getRandomInt(0, singleVars.length)];
             let options = [];
@@ -112,8 +123,8 @@ function generateFactorizationQuestions(num, levelPref) {
             }
             qObj.options = shuffleArray(options).map((opt, idx) => ({...opt, id: String.fromCharCode(65 + idx)}));
 
-        } else if (levelType === '2b') {
-            qObj.level = "⭐⭐ 程度 2B";
+        } else if (levelType === '2' && subType === 'b') {
+            qObj.level = "⭐⭐ 程度 2";
             let type = getRandomInt(0, 2); 
             const pair = varPairs[getRandomInt(0, varPairs.length)];
             const v1 = pair[0], v2 = pair[1];
@@ -166,8 +177,8 @@ function generateFactorizationQuestions(num, levelPref) {
             }
             qObj.options = shuffleArray(options).map((opt, idx) => ({...opt, id: String.fromCharCode(65 + idx)}));
 
-        } else if (levelType === '3a') {
-            qObj.level = "⭐⭐⭐ 程度 3A";
+        } else if (levelType === '3' && subType === 'a') {
+            qObj.level = "⭐⭐⭐ 程度 3";
             const v = singleVars[getRandomInt(0, singleVars.length)];
             let a, b;
             do {
@@ -223,7 +234,7 @@ function generateFactorizationQuestions(num, levelPref) {
             qObj.options = shuffleArray(options).map((opt, idx) => ({...opt, id: String.fromCharCode(65 + idx)}));
 
         } else {
-            qObj.level = "⭐⭐⭐ 程度 3B";
+            qObj.level = "⭐⭐⭐ 程度 3";
             const pair = varPairs[getRandomInt(0, varPairs.length)];
             const v1 = pair[0], v2 = pair[1];
             let a, b;
