@@ -107,7 +107,7 @@
 
         .black-text { color: #000000; font-weight: bold; font-size: 14px; line-height: 1.5; }
         
-        /* 雙行平排的魔物清單設計 */
+        /* 雙行平排的魔物清單設計 - 確保不換行 */
         .monster-grid { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
@@ -115,9 +115,9 @@
             justify-items: center; 
             padding: 4px 0; 
         }
-        .monster-item { display: flex; align-items: center; justify-content: flex-start; gap: 6px; width: 90px; }
+        .monster-item { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; }
         .monster-item.boss { grid-column: span 2; justify-content: center; width: auto; gap: 10px; }
-        .monster-count { color: #000000; font-weight: bold; font-size: 18px; }
+        .monster-count { color: #000000; font-weight: bold; font-size: 17px; white-space: nowrap; } /* 絕對防止換行，稍微縮小字體以完美搭配圖示 */
         
         #leaderboard-box { flex: 1 1 auto; display: flex; flex-direction: column; overflow: hidden; min-height: 80px; }
         #leaderboard-box h3 { margin: 0 0 8px 0; color: #000; text-align: center; font-size: 15px; }
@@ -227,7 +227,7 @@
         <div id="ui-container">
             <div class="ui-box">
                 <div class="player-info-wrapper">
-                    <!-- 3倍超高解析度畫布以保證不起格 -->
+                    <!-- 超高解析度畫布以保證不起格 -->
                     <canvas id="player-icon" width="165" height="165" style="width: 55px; height: 55px;"></canvas>
                     <div style="flex:1;">
                         <div id="hp-bar-bg"><div id="ui-hp-fill"></div></div>
@@ -242,14 +242,14 @@
                 <div style="text-align:center; color:#000; font-weight:bold; font-size:13px; margin-bottom:5px;">擊殺進度 (尚未擊斃: <span id="ui-left-text">0</span>)</div>
                 <div id="kill-bar-bg"><div id="ui-kill-fill"></div></div>
                 
-                <div style="text-align:center; color:#000; font-weight:bold; font-size:13px; margin:6px 0 6px 0;">剩餘魔物目標</div>
-                <!-- 雙行平排，超大高解析度畫布，絕不裁剪 -->
+                <div style="text-align:center; color:#000; font-weight:bold; font-size:13px; margin:6px 0 4px 0;">剩餘魔物目標</div>
+                <!-- 雙行平排，超大高解析度畫布，絕不裁剪，完美 50px 尺寸以防擠壓換行 -->
                 <div class="monster-grid">
-                    <div class="monster-item"><canvas id="m-icon-1" width="165" height="165" style="width: 55px; height: 55px;"></canvas><span class="monster-count" id="m-count-1">x 0</span></div>
-                    <div class="monster-item"><canvas id="m-icon-2" width="165" height="165" style="width: 55px; height: 55px;"></canvas><span class="monster-count" id="m-count-2">x 0</span></div>
-                    <div class="monster-item"><canvas id="m-icon-3" width="165" height="165" style="width: 55px; height: 55px;"></canvas><span class="monster-count" id="m-count-3">x 0</span></div>
-                    <div class="monster-item"><canvas id="m-icon-4" width="165" height="165" style="width: 55px; height: 55px;"></canvas><span class="monster-count" id="m-count-4">x 0</span></div>
-                    <div class="monster-item boss"><canvas id="m-icon-5" width="165" height="165" style="width: 55px; height: 55px;"></canvas><span class="monster-count" id="m-count-5">x 0</span></div>
+                    <div class="monster-item"><canvas id="m-icon-1" width="150" height="150" style="width: 50px; height: 50px;"></canvas><span class="monster-count" id="m-count-1">x 0</span></div>
+                    <div class="monster-item"><canvas id="m-icon-2" width="150" height="150" style="width: 50px; height: 50px;"></canvas><span class="monster-count" id="m-count-2">x 0</span></div>
+                    <div class="monster-item"><canvas id="m-icon-3" width="150" height="150" style="width: 50px; height: 50px;"></canvas><span class="monster-count" id="m-count-3">x 0</span></div>
+                    <div class="monster-item"><canvas id="m-icon-4" width="150" height="150" style="width: 50px; height: 50px;"></canvas><span class="monster-count" id="m-count-4">x 0</span></div>
+                    <div class="monster-item boss"><canvas id="m-icon-5" width="150" height="150" style="width: 50px; height: 50px;"></canvas><span class="monster-count" id="m-count-5">x 0</span></div>
                 </div>
             </div>
 
@@ -268,7 +268,7 @@
             <button class="skip-btn" onclick="window.returnToMenu()">略過並重玩</button>
         </div>
 
-        <div id="version-tag">Math Survival V68</div>
+        <div id="version-tag">Math Survival V69</div>
     </div>
 
     <audio id="bgm" src="audio/bgm.mp3" loop></audio>
@@ -718,8 +718,8 @@ function drawHUDIcons() {
         mCtx.clearRect(0,0,mC.width,mC.height);
         
         mCtx.save();
-        // 畫布為 165x165，進行 5.5 倍巨幅放大，並計算完美的中心偏移以保留王冠與角
-        mCtx.translate(82.5, 115); mCtx.scale(5.5, 5.5); 
+        // 畫布為 150x150，進行 5 倍巨幅放大，並計算完美的中心偏移以保留王冠與角
+        mCtx.translate(75, 105); mCtx.scale(5.0, 5.0); 
         drawMonsterEntity(mCtx, 14, mTypes[i].color, mTypes[i].tier, 0, true);
         mCtx.restore();
     }
@@ -1539,7 +1539,6 @@ function draw() {
     }
 
     ctx.save();
-    ctx.scale(globalScale, globalScale); // 套用全域縮放，使遊戲畫面在放大時也保持視野
     
     ctx.fillStyle = '#d2b48c'; 
     ctx.fillRect(0, 0, logicalWidth, logicalHeight);
@@ -1675,7 +1674,7 @@ function draw() {
         ctx.fillStyle = 'black'; ctx.fillText(text.text, text.x + 2, text.y + 2);
         ctx.fillStyle = text.color; ctx.fillText(text.text, text.x, text.y);
     }
-    ctx.globalAlpha = 1.0;
+    ctx.globalAlpha = 1.0; ctx.restore(); 
 
     let gameCenterX = UI_BOUND + (logicalWidth - UI_BOUND) / 2;
 
@@ -1748,13 +1747,7 @@ function draw() {
             // 顯示計算公式
             ctx.fillText(`擊殺數: ${enemiesKilled} / ${TOTAL_MONSTERS} (總得分: ${enemiesKilled} x ${mult} = ${finalScore}分)`, gameCenterX, logicalHeight/2 - 80);
         }
-        
-        ctx.globalAlpha = (globalTime % 60 < 30) ? 1 : 0.5; ctx.fillStyle = '#94a3b8'; ctx.font = '24px Arial';
-        ctx.fillText('<< 請在左下方輸入資料上傳排行榜 >>', gameCenterX, logicalHeight/2 + 250); 
-        ctx.fillText('或按 [Enter] 返回主選單', gameCenterX, logicalHeight/2 + 290); ctx.globalAlpha = 1.0;
     }
-    
-    ctx.restore(); // 恢復畫布的全域縮放
 }
 
 async function loadGameData() {
