@@ -244,8 +244,8 @@
         <button class="skip-btn" onclick="window.returnToMenu()">略過並重玩</button>
     </div>
 
-    <!-- 嚴格遵守規則更新版本號碼至 V63 -->
-    <div id="version-tag">Math Survival V63</div>
+    <!-- 更新版本號碼至 V64 -->
+    <div id="version-tag">Math Survival V64</div>
 
     <audio id="bgm" src="audio/bgm.mp3" loop></audio>
     <audio id="shootSfx" src="audio/shootSfx.m4a"></audio>
@@ -746,42 +746,12 @@ function formatInput(questionStr, ans) {
 }
 
 function generateFallbackInput() {
-    let maxVal = 10 + (Math.max(0, player.weaponLevel) * 10);
-    let num1 = getRandomInt(5, maxVal); let num2 = getRandomInt(5, maxVal);
-    let ans = num1 + num2;
-    return formatInput(`${num1} + ${num2}`, ans);
-}
-
-function generateFallbackMCQ() {
-    let maxVal = 10 + (Math.max(0, player.weaponLevel) * 10);
-    let num1 = getRandomInt(5, maxVal); let num2 = getRandomInt(5, maxVal);
-    let ans = num1 + num2;
-    let opts = [
-        { text: `\\( ${ans} \\)`, isCorrect: true },
-        { text: `\\( ${ans + getRandomInt(1, 5)} \\)`, isCorrect: false },
-        { text: `\\( ${ans - getRandomInt(1, 5)} \\)`, isCorrect: false },
-        { text: `\\( ${ans + getRandomInt(6, 10)} \\)`, isCorrect: false }
-    ];
-    return { 
-        question: `<div style="font-size:16px;color:#cbd5e1;margin-bottom:10px;">請計算以下結果：</div><div style="font-size:28px;font-weight:bold;">\\( \\displaystyle ${num1} + ${num2} = ? \\)</div>`, 
-        options: shuffleArray(opts).map((o,i)=>({...o, id: String.fromCharCode(65+i)})) 
-    };
-}
-
-function formatMCQ(questionStr, ans) {
-    let wrong1 = ans + getRandomInt(1, 4);
-    let wrong2 = ans - getRandomInt(1, 4);
-    let wrong3 = ans + getRandomInt(5, 8);
-    let opts = [
-        { text: `\\( ${ans} \\)`, isCorrect: true },
-        { text: `\\( ${wrong1} \\)`, isCorrect: false },
-        { text: `\\( ${wrong2} \\)`, isCorrect: false },
-        { text: `\\( ${wrong3} \\)`, isCorrect: false }
-    ];
-    return {
-        question: `<div style="font-size:16px;color:#cbd5e1;margin-bottom:10px;">請計算以下結果：</div><div style="font-size:28px;font-weight:bold;">\\( \\displaystyle ${questionStr} = ? \\)</div>`,
-        options: shuffleArray(opts).map((o,i)=>({...o, id: String.fromCharCode(65+i)}))
-    };
+    let wl = Math.max(0, player.weaponLevel);
+    // 當外部題庫讀取失敗時，改為使用雙位數乘法作為後備輸入題
+    let num1 = getRandomInt(11, 20 + wl * 2); 
+    let num2 = getRandomInt(2, 9);
+    let ans = num1 * num2;
+    return formatInput(`${num1} \\times ${num2}`, ans);
 }
 
 function generateLevel1Question() {
@@ -856,10 +826,17 @@ function triggerMath(type) {
             } else if (typeof generateIndicesQuestions === 'function') {
                 qData = generateIndicesQuestions(1, 1)[0];
             } else {
-                qData = generateFallbackMCQ();
+                qData = generateFallbackInput();
             }
         } else if (diffStr === '4' || diffStr === '5') {
-            let level = diffStr === '4' ? 1 : 2;
+            // 程度 5：以 50% 機率隨機向外部題庫索取 '2A' 或 '2B'
+            let level;
+            if (diffStr === '4') {
+                level = 1;
+            } else {
+                level = Math.random() < 0.5 ? '2A' : '2B';
+            }
+            
             let topics = ['rounding', 'expansion', 'factorization', 'indices'];
             let t = topics[getRandomInt(0, topics.length)];
             
@@ -868,16 +845,17 @@ function triggerMath(type) {
             else if (t === 'expansion' && typeof generateExpansionQuestions === 'function') qData = generateExpansionQuestions(1, level)[0];
             else if (t === 'factorization' && typeof generateFactorizationQuestions === 'function') qData = generateFactorizationQuestions(1, level)[0];
             else if (t === 'indices' && typeof generateIndicesQuestions === 'function') qData = generateIndicesQuestions(1, level)[0];
-            else qData = generateFallbackMCQ();
+            else qData = generateFallbackInput();
         } else {
-            qData = generateFallbackMCQ();
+            qData = generateFallbackInput();
         }
     } catch(e) { 
-        console.error("題庫生成錯誤，使用後備題目", e); 
-        qData = generateFallbackMCQ(); 
+        // 在 Console 印出警告，幫助尋找哪一個題庫發生問題
+        console.error("警告：外部進階題庫讀取失敗 (難度 " + diffStr + ")，已自動切換至後備輸入題。請檢查 JS 檔案。", e); 
+        qData = generateFallbackInput(); 
     }
     
-    if (!qData) qData = generateFallbackMCQ();
+    if (!qData) qData = generateFallbackInput();
 
     let contentEl = document.getElementById('math-question-content');
     if (contentEl) contentEl.innerHTML = qData.question;
