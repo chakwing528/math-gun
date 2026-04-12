@@ -244,8 +244,8 @@
         <button class="skip-btn" onclick="window.returnToMenu()">略過並重玩</button>
     </div>
 
-    <!-- 更新版本號碼至 V64 -->
-    <div id="version-tag">Math Survival V64</div>
+    <!-- 更新版本號碼至 V65 -->
+    <div id="version-tag">Math Survival V65</div>
 
     <audio id="bgm" src="audio/bgm.mp3" loop></audio>
     <audio id="shootSfx" src="audio/shootSfx.m4a"></audio>
@@ -358,16 +358,60 @@ function resizeCanvas() {
     ctx.resetTransform();
     ctx.scale(dpr, dpr);
 
-    // 更新搖桿位置至邏輯座標底端
-    leftJoyBase = { x: UI_BOUND + 60, y: logicalHeight - 100 };
-    if (!leftJoy.active) leftJoy.stick = { x: leftJoyBase.x, y: leftJoyBase.y };
+    // 計算全域縮放比例 (基於標準 1180x820 解析度)
+    let scaleX = window.innerWidth / 1180;
+    let scaleY = window.innerHeight / 820;
+    globalScale = Math.min(scaleX, scaleY);
+    globalScale = Math.max(0.4, Math.min(globalScale, 2.5));
     
+    // 將邏輯座標轉換以維持遊戲視野比例
+    logicalWidth = logicalWidth / globalScale;
+    logicalHeight = logicalHeight / globalScale;
+
+    // 套用縮放至 UI 面板
+    let uiContainer = document.getElementById('ui-container');
+    if (uiContainer) {
+        uiContainer.style.transform = `scale(${globalScale})`;
+        uiContainer.style.transformOrigin = 'top left';
+        uiContainer.style.height = `${logicalHeight - 20}px`; 
+    }
+    
+    let mathContainer = document.getElementById('math-container');
+    if (mathContainer) {
+        mathContainer.style.transform = `scale(${globalScale})`;
+        mathContainer.style.transformOrigin = 'center center';
+    }
+
+    let startMenuContent = document.getElementById('start-menu-content');
+    if (startMenuContent) {
+        startMenuContent.style.transform = `scale(${globalScale})`;
+        startMenuContent.style.transformOrigin = 'center center';
+    }
+
+    let portraitLockContent = document.getElementById('portrait-lock-content');
+    if (portraitLockContent) {
+        portraitLockContent.style.transform = `scale(${globalScale})`;
+        portraitLockContent.style.transformOrigin = 'center center';
+    }
+
+    let versionTag = document.getElementById('version-tag');
+    if(versionTag) {
+        versionTag.style.transform = `scale(${globalScale})`;
+        versionTag.style.transformOrigin = 'bottom left';
+    }
+
     // 將上傳表單動態定位至遊戲區正中央
     let submitForm = document.getElementById('submit-form');
     if (submitForm) {
         let centerX = UI_BOUND + (logicalWidth - UI_BOUND) / 2;
         submitForm.style.left = `${centerX}px`;
+        submitForm.style.transform = `translate(-50%, 0) scale(${globalScale})`;
+        submitForm.style.transformOrigin = 'top center';
     }
+
+    // 清理搖桿位置
+    leftJoyBase = { x: UI_BOUND + 60, y: logicalHeight - 100 };
+    if (!leftJoy.active) leftJoy.stick = { x: leftJoyBase.x, y: leftJoyBase.y };
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
@@ -829,13 +873,7 @@ function triggerMath(type) {
                 qData = generateFallbackInput();
             }
         } else if (diffStr === '4' || diffStr === '5') {
-            // 程度 5：以 50% 機率隨機向外部題庫索取 '2A' 或 '2B'
-            let level;
-            if (diffStr === '4') {
-                level = 1;
-            } else {
-                level = Math.random() < 0.5 ? '2A' : '2B';
-            }
+            let level = diffStr === '4' ? 1 : 2;
             
             let topics = ['rounding', 'expansion', 'factorization', 'indices'];
             let t = topics[getRandomInt(0, topics.length)];
