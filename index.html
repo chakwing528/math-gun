@@ -64,6 +64,18 @@
         }
         .diff-btn:hover { background: #2563eb; }
 
+        /* 鍵盤操作指引的按鍵樣式 */
+        .key {
+            width: 50px; height: 50px;
+            background: #e2e8f0;
+            color: #0f172a;
+            font-weight: bold; font-size: 24px;
+            display: flex; justify-content: center; align-items: center;
+            border-radius: 8px;
+            border-bottom: 5px solid #94a3b8;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+        }
+
         #math-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 600; display: none;
@@ -181,29 +193,55 @@
         <div id="loading-screen">連接伺服器並載入數據中...</div>
         
         <div id="start-menu">
-            <div id="start-menu-content" style="display:flex; flex-direction:column; align-items:center; gap:12px;">
-                <h1 style="color: #fbbf24; font-size: 35px; margin-bottom: 15px; text-shadow: 2px 2px 4px #000; text-align: center;">請選擇目標程度</h1>
+            <!-- 橫向排列：左側為遊戲指引，右側為難度選擇 -->
+            <div id="start-menu-content" style="display:flex; flex-direction:row; align-items:center; justify-content:center; gap:60px;">
                 
-                <button class="diff-btn" onclick="window.startGame('1')">
-                    程度 1
-                    <span style="font-size: 14px; font-weight: normal; display: block; margin-top: 4px; color: #e2e8f0;">10-50 整數加減運算<br><span style="color:#fbbf24; font-weight:bold;">(分數 x1.0)</span></span>
-                </button>
-                <button class="diff-btn" onclick="window.startGame('2')">
-                    程度 2
-                    <span style="font-size: 14px; font-weight: normal; display: block; margin-top: 4px; color: #e2e8f0;">整數四則混合運算 (先乘除後加減)<br><span style="color:#fbbf24; font-weight:bold;">(分數 x1.2)</span></span>
-                </button>
-                <button class="diff-btn" onclick="window.startGame('3')">
-                    程度 3
-                    <span style="font-size: 14px; font-weight: normal; display: block; margin-top: 4px; color: #e2e8f0;">加減混合 及 基礎指數<br><span style="color:#fbbf24; font-weight:bold;">(分數 x1.4)</span></span>
-                </button>
-                <button class="diff-btn" onclick="window.startGame('4')">
-                    程度 4
-                    <span style="font-size: 14px; font-weight: normal; display: block; margin-top: 4px; color: #e2e8f0;">捨入、展開、因式分解、指數<br>(基礎隨機) <span style="color:#fbbf24; font-weight:bold;">(分數 x1.6)</span></span>
-                </button>
-                <button class="diff-btn" onclick="window.startGame('5')">
-                    程度 5
-                    <span style="font-size: 14px; font-weight: normal; display: block; margin-top: 4px; color: #e2e8f0;">捨入、展開、因式分解、指數<br>(進階隨機) <span style="color:#fbbf24; font-weight:bold;">(分數 x1.8)</span></span>
-            </button>
+                <!-- 左側：遊戲操作指引 -->
+                <div style="background: rgba(30, 41, 59, 0.85); padding: 35px 40px; border-radius: 16px; border: 2px solid #475569; display: flex; flex-direction: column; align-items: center; box-shadow: 0 0 25px rgba(0,0,0,0.6);">
+                    <h2 style="color: #fbbf24; margin: 0 0 25px 0; font-size: 26px; text-shadow: 1px 1px 3px #000;">⌨️ 遊戲操作指引</h2>
+                    
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 30px;">
+                        <div class="key">W</div>
+                        <div style="display: flex; gap: 8px;">
+                            <div class="key">A</div>
+                            <div class="key">S</div>
+                            <div class="key">D</div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; color: #e2e8f0; font-size: 18px; line-height: 1.8;">
+                        <span style="color:#fbbf24; font-weight:bold;">W</span> : 前進 &nbsp;&nbsp;&nbsp; <span style="color:#fbbf24; font-weight:bold;">S</span> : 後退<br>
+                        <span style="color:#fbbf24; font-weight:bold;">A</span> : 向左 &nbsp;&nbsp;&nbsp; <span style="color:#fbbf24; font-weight:bold;">D</span> : 向右<br><br>
+                        <span style="color:#38bdf8; font-weight:bold;">🖱️ 滑鼠</span> : 游標瞄準方向<br>
+                        <span style="color:#ef4444; font-weight:bold;">🔘 左鍵</span> : 按住即可射擊
+                    </div>
+                </div>
+
+                <!-- 右側：難度選擇 -->
+                <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+                    <h1 style="color: #fbbf24; font-size: 35px; margin-bottom: 15px; text-shadow: 2px 2px 4px #000; text-align: center;">請選擇目標程度</h1>
+                    
+                    <button class="diff-btn" onclick="window.startGame('1')">
+                        程度 1
+                        <span style="font-size: 14px; font-weight: normal; display: block; margin-top: 4px; color: #e2e8f0;">10-50 整數加減運算<br><span style="color:#fbbf24; font-weight:bold;">(分數 x1.0)</span></span>
+                    </button>
+                    <button class="diff-btn" onclick="window.startGame('2')">
+                        程度 2
+                        <span style="font-size: 14px; font-weight: normal; display: block; margin-top: 4px; color: #e2e8f0;">整數四則混合運算 (先乘除後加減)<br><span style="color:#fbbf24; font-weight:bold;">(分數 x1.2)</span></span>
+                    </button>
+                    <button class="diff-btn" onclick="window.startGame('3')">
+                        程度 3
+                        <span style="font-size: 14px; font-weight: normal; display: block; margin-top: 4px; color: #e2e8f0;">加減混合 及 基礎指數<br><span style="color:#fbbf24; font-weight:bold;">(分數 x1.4)</span></span>
+                    </button>
+                    <button class="diff-btn" onclick="window.startGame('4')">
+                        程度 4
+                        <span style="font-size: 14px; font-weight: normal; display: block; margin-top: 4px; color: #e2e8f0;">捨入、展開、因式分解、指數<br>(基礎隨機) <span style="color:#fbbf24; font-weight:bold;">(分數 x1.6)</span></span>
+                    </button>
+                    <button class="diff-btn" onclick="window.startGame('5')">
+                        程度 5
+                        <span style="font-size: 14px; font-weight: normal; display: block; margin-top: 4px; color: #e2e8f0;">捨入、展開、因式分解、指數<br>(進階隨機) <span style="color:#fbbf24; font-weight:bold;">(分數 x1.8)</span></span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -262,8 +300,8 @@
             <button class="skip-btn" onclick="window.returnToMenu()">略過並重玩</button>
         </div>
 
-        <!-- 確保版本號隨時可見 V70 -->
-        <div id="version-tag">Math Survival V70</div>
+        <!-- 確保版本號隨時可見 V71 -->
+        <div id="version-tag">Math Survival V71</div>
     </div>
 
     <audio id="bgm" src="audio/bgm.mp3" loop></audio>
@@ -388,9 +426,29 @@ function resizeCanvas() {
         let centerX = UI_BOUND + (logicalWidth - UI_BOUND) / 2;
         submitForm.style.left = `${centerX}px`;
     }
+    
+    // 動態縮放 Start Menu 使其不擁擠
+    let scaleX = window.innerWidth / 1180;
+    let scaleY = window.innerHeight / 820;
+    globalScale = Math.min(scaleX, scaleY);
+    globalScale = Math.max(0.4, Math.min(globalScale, 2.5));
+    
+    let startMenuContent = document.getElementById('start-menu-content');
+    if (startMenuContent) {
+        startMenuContent.style.transform = `scale(${globalScale})`;
+        startMenuContent.style.transformOrigin = 'center center';
+    }
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
+
+// 轉換視窗滑鼠/觸控座標為遊戲邏輯座標 (全螢幕模式為 1:1)
+function getLogicalPos(clientX, clientY) {
+    return {
+        x: clientX,
+        y: clientY
+    };
+}
 
 // Global State
 let gameState = 'START_MENU'; 
@@ -1095,8 +1153,9 @@ function handleTouchStart(e) {
     const touches = e.changedTouches;
     for (let i = 0; i < touches.length; i++) {
         let t = touches[i]; 
-        let tx = t.clientX; 
-        let ty = t.clientY;
+        let pos = getLogicalPos(t.clientX, t.clientY);
+        let tx = pos.x; 
+        let ty = pos.y;
         
         if (gameState === 'GAME_OVER' || gameState === 'VICTORY') { 
             if (scoreSubmitted || (document.getElementById('submit-form') && document.getElementById('submit-form').style.display === 'none')) window.returnToMenu(); 
@@ -1117,8 +1176,9 @@ function handleTouchMove(e) {
     e.preventDefault(); const touches = e.changedTouches;
     for (let i = 0; i < touches.length; i++) {
         let t = touches[i]; 
-        let tx = t.clientX; 
-        let ty = t.clientY;
+        let pos = getLogicalPos(t.clientX, t.clientY);
+        let tx = pos.x; 
+        let ty = pos.y;
         
         if (leftJoy.active && t.identifier === leftJoy.id) {
             let dx = tx - leftJoyBase.x; 
@@ -1147,8 +1207,9 @@ function handleTouchEnd(e) {
 }
 
 window.addEventListener('mousemove', (e) => { 
-    mouseX = e.clientX; 
-    mouseY = e.clientY; 
+    let pos = getLogicalPos(e.clientX, e.clientY);
+    mouseX = pos.x; 
+    mouseY = pos.y; 
 });
 window.addEventListener('mousedown', (e) => {
     if(e.target !== canvas) return;
