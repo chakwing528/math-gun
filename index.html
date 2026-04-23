@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 修正了致命的 title 標籤錯誤 -->
     <title>Math Survival - Optimized & Modular</title>
     
     <!-- 引入 MathJax 處理 LaTeX 數學排版 -->
@@ -99,11 +98,11 @@
         .mcq-btn:hover { background: #475569; border-color: #fbbf24; }
         .mcq-label { color: #fbbf24; font-weight: bold; font-size: 24px; }
 
-        /* --- 原生響應式排版 UI --- */
+        /* --- 原生響應式排版 UI (移除強制縮放，杜絕排版崩壞) --- */
         #ui-container {
             position: absolute; top: 10px; left: 10px; bottom: 10px; width: 220px; 
             display: flex; flex-direction: column; gap: 8px; z-index: 10; pointer-events: none;
-            max-height: calc(100% - 20px); 
+            max-height: calc(100% - 20px); /* 絕對防止 UI 溢出導致滾動條 */
         }
         .ui-box { 
             background: rgba(241, 245, 249, 0.30); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
@@ -119,7 +118,7 @@
 
         .black-text { color: #000000; font-weight: bold; font-size: 14px; line-height: 1.5; }
         
-        /* 雙行平排的魔物清單設計 */
+        /* 雙行平排的魔物清單設計 - 絕對防止換行 */
         .monster-grid { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
@@ -131,7 +130,7 @@
         .monster-item.boss { grid-column: span 2; justify-content: center; width: auto; gap: 10px; }
         .monster-count { color: #000000; font-weight: bold; font-size: 16px; white-space: nowrap; } 
         
-        /* 排行榜 */
+        /* 解決 Flexbox 內容溢出撐破容器的終極修復 (min-height: 0) */
         #leaderboard-box { flex: 1 1 auto; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
         #leaderboard-box h3 { margin: 0 0 8px 0; color: #000; text-align: center; font-size: 15px; flex-shrink: 0; }
         #leaderboard-list { 
@@ -153,7 +152,7 @@
             align-items: center; 
             gap: 12px; 
             position: absolute; 
-            top: 55%; 
+            top: 55%; /* 降低起點，絕對不遮擋文字 */
             transform: translate(-50%, 0); 
             background: rgba(30, 41, 59, 0.95); 
             padding: 25px; 
@@ -301,8 +300,8 @@
             <button class="skip-btn" onclick="window.returnToMenu()">略過並重玩</button>
         </div>
 
-        <!-- 確保版本號隨時可見 V75 -->
-        <div id="version-tag">Math Survival V75</div>
+        <!-- 確保版本號隨時可見 V78 -->
+        <div id="version-tag">Math Survival V78</div>
     </div>
 
     <audio id="bgm" src="audio/bgm.mp3" loop></audio>
@@ -341,21 +340,22 @@ function initAudio() {
         let bgm = document.getElementById('bgm');
         if(bgm) { 
             bgm.volume = 0.4; 
-            bgm.loop = true; 
+            bgm.loop = true; // 強制設定循環播放
             bgm.play().catch(e=>{}); 
         }
         
+        // 預載並解鎖所有音效，避免第一次點擊時延遲
         let sfxIds = ['shootSfx', 'reloadSfx', 'emptyAmmoSfx'];
         sfxIds.forEach(id => {
             let sfx = document.getElementById(id);
             if (sfx) {
-                sfx.volume = 0; 
+                sfx.volume = 0; // 暫時靜音
                 let p = sfx.play();
                 if (p !== undefined) {
                     p.then(() => {
                         sfx.pause();
                         sfx.currentTime = 0;
-                        sfx.volume = 1; 
+                        sfx.volume = 1; // 恢復音量
                     }).catch(()=>{ sfx.volume = 1; });
                 } else {
                     sfx.volume = 1;
@@ -367,6 +367,7 @@ function initAudio() {
     }
 }
 
+// 監聽網頁可見性變化，退出或切換分頁時自動暫停音效
 document.addEventListener("visibilitychange", () => {
     let audios = ['bgm', 'shootSfx', 'reloadSfx', 'emptyAmmoSfx'];
     if (document.hidden) {
@@ -378,7 +379,7 @@ document.addEventListener("visibilitychange", () => {
         if (audioInitialized && gameState !== 'START_MENU') {
             let bgm = document.getElementById('bgm');
             if (bgm) {
-                bgm.loop = true; 
+                bgm.loop = true; // 確保重回畫面時依然設定為循環
                 bgm.play().catch(e=>{});
             }
         }
@@ -387,9 +388,11 @@ document.addEventListener("visibilitychange", () => {
 
 const UI_BOUND = 250; 
 
+// --- 全域系統邏輯解析度 (100% 滿版無黑邊) ---
 let logicalWidth = window.innerWidth;
 let logicalHeight = window.innerHeight;
 
+// --- Control System Variables ---
 let leftJoyBase = { x: UI_BOUND + 60, y: 120 }; 
 let leftJoy = { active: false, id: null, stick: {x:0, y:0}, dir: {x:0, y:0} };
 const joyRadius = 50;
@@ -399,27 +402,32 @@ let isShooting = false;
 let mouseX = window.innerWidth / 2; 
 let mouseY = window.innerHeight / 2;
 
+// 動態縮放處理 - Retina 高解析度無黑邊滿版渲染
 function resizeCanvas() {
     logicalWidth = window.innerWidth;
     logicalHeight = window.innerHeight;
 
     let dpr = window.devicePixelRatio || 1;
     
+    // 設定物理像素以維持 Retina 高解析度
     canvas.width = logicalWidth * dpr;
     canvas.height = logicalHeight * dpr;
     
     ctx.resetTransform();
     ctx.scale(dpr, dpr);
 
+    // 更新左搖桿位置至邏輯座標底端
     leftJoyBase = { x: UI_BOUND + 60, y: logicalHeight - 100 };
     if (!leftJoy.active) leftJoy.stick = { x: leftJoyBase.x, y: leftJoyBase.y };
 
+    // 將上傳成績表單動態定位至遊戲區正中央
     let submitForm = document.getElementById('submit-form');
     if (submitForm) {
         let centerX = UI_BOUND + (logicalWidth - UI_BOUND) / 2;
         submitForm.style.left = `${centerX}px`;
     }
     
+    // 動態縮放 Start Menu 使其不擁擠
     let scaleX = window.innerWidth / 1180;
     let scaleY = window.innerHeight / 820;
     globalScale = Math.min(scaleX, scaleY);
@@ -434,10 +442,15 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
+// 轉換視窗滑鼠/觸控座標為遊戲邏輯座標 (全螢幕模式為 1:1)
 function getLogicalPos(clientX, clientY) {
-    return { x: clientX, y: clientY };
+    return {
+        x: clientX,
+        y: clientY
+    };
 }
 
+// Global State
 let gameState = 'START_MENU'; 
 let globalTime = 0; let shakeTime = 0; let bossAlarmTimer = 0;
 let currentDifficulty = '1';
@@ -447,6 +460,7 @@ let mathTimer = 0;
 let scoreSubmitted = false;
 let questionsSolved = 0;
 
+// Progression & Entity Arrays
 let enemiesKilled = 0; let totalMonstersSpawned = 0; let TOTAL_MONSTERS = 19; 
 let monstersLeft = [0, 0, 0, 0, 0, 0]; 
 let currentWave = 1;
@@ -473,7 +487,7 @@ const WEAPONS = [
     { level: 9, name: "Lv.MAX 神話武器", damage: 25.6, bullets: 9, fireRate: 1, playerSpeed: 10, reloadAmmo: 100, magCapacity: 30, ammoBoxRefill: 30, color: '#ef4444', glow: '#b91c1c', recoil: 16, speed: 30, penetrate: true }
 ];
 
-// ✨ 新增：基礎玩家速度（無武器時的預設值，可由 Google Sheet 自動覆寫）
+// 新增：基礎玩家速度（無武器時的預設值，可由 Google Sheet 覆寫）
 let basePlayerSpeed = 4;
 
 let player = {
@@ -484,11 +498,12 @@ let player = {
 
 let bullets = []; let enemies = []; let lootBoxes = []; let ammoBoxes = []; let particles = []; let floatingTexts = [];
 
+// DOM Caching Optimization
 const uiElements = {};
 let uiReady = false;
 
 // ==============================================================================
-// VISUAL EFFECTS
+// VISUAL EFFECTS (Implemented Missing Functions)
 // ==============================================================================
 
 function createParticles(x, y, color, count, speed) {
@@ -508,18 +523,28 @@ function createParticles(x, y, color, count, speed) {
 }
 
 function addFloatingText(text, x, y, color, size = 20) {
-    floatingTexts.push({ text: text, x: x, y: y, color: color, size: size, life: 1.0, dy: -1.5 });
+    floatingTexts.push({
+        text: text,
+        x: x, y: y,
+        color: color,
+        size: size,
+        life: 1.0,
+        dy: -1.5
+    });
 }
 
 // ==============================================================================
 // UI & HUD MANAGEMENT
 // ==============================================================================
 
+// 新增魔怪外觀繪製模組，統一 HUD 與遊戲內的顯示樣式
 function drawMonsterEntity(ctx, eSize, color, tier, visualY, isFacingRight) {
     let eyeOffsetX = isFacingRight ? eSize*0.15 : -eSize*0.15;
     
+    // 基礎身體
     ctx.fillStyle = color; ctx.beginPath(); 
     if (tier >= 4) {
+        // 等別 4 以上為鋸齒狀底部
         ctx.arc(0, visualY - eSize*0.4, eSize*0.45, Math.PI, 0); 
         ctx.lineTo(eSize*0.45, visualY + eSize*0.1);
         ctx.lineTo(eSize*0.2, visualY - eSize*0.05);
@@ -527,6 +552,7 @@ function drawMonsterEntity(ctx, eSize, color, tier, visualY, isFacingRight) {
         ctx.lineTo(-eSize*0.2, visualY - eSize*0.05);
         ctx.lineTo(-eSize*0.45, visualY + eSize*0.1);
     } else {
+        // 一般平滑底部
         ctx.arc(0, visualY - eSize*0.4, eSize*0.45, Math.PI, 0); 
         ctx.lineTo(eSize*0.45, visualY + eSize*0.1); 
         ctx.lineTo(-eSize*0.45, visualY + eSize*0.1); 
@@ -534,7 +560,9 @@ function drawMonsterEntity(ctx, eSize, color, tier, visualY, isFacingRight) {
     ctx.fill();
     ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.stroke();
 
+    // 各等級專屬造型裝飾
     if (tier === 1) {
+        // Lv1: 基礎小怪
         ctx.fillStyle = 'white';
         ctx.beginPath(); ctx.arc(eyeOffsetX - eSize*0.15, visualY - eSize*0.3, eSize*0.08, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(eyeOffsetX + eSize*0.15, visualY - eSize*0.3, eSize*0.08, 0, Math.PI*2); ctx.fill();
@@ -542,46 +570,57 @@ function drawMonsterEntity(ctx, eSize, color, tier, visualY, isFacingRight) {
         ctx.beginPath(); ctx.arc(eyeOffsetX - eSize*0.15 + (isFacingRight?1:-1), visualY - eSize*0.3, eSize*0.04, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(eyeOffsetX + eSize*0.15 + (isFacingRight?1:-1), visualY - eSize*0.3, eSize*0.04, 0, Math.PI*2); ctx.fill();
     } else if (tier === 2) {
+        // Lv2: 憤怒的角怪
         ctx.fillStyle = 'white';
         ctx.beginPath(); ctx.arc(eyeOffsetX - eSize*0.15, visualY - eSize*0.3, eSize*0.08, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(eyeOffsetX + eSize*0.15, visualY - eSize*0.3, eSize*0.08, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = 'black'; 
         ctx.beginPath(); ctx.arc(eyeOffsetX - eSize*0.15 + (isFacingRight?1:-1), visualY - eSize*0.3, eSize*0.04, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(eyeOffsetX + eSize*0.15 + (isFacingRight?1:-1), visualY - eSize*0.3, eSize*0.04, 0, Math.PI*2); ctx.fill();
+        // 憤怒眉毛
         ctx.lineWidth = 2; ctx.strokeStyle = 'black'; ctx.beginPath();
         ctx.moveTo(eyeOffsetX - eSize*0.3, visualY - eSize*0.45); ctx.lineTo(eyeOffsetX - eSize*0.05, visualY - eSize*0.35);
         ctx.moveTo(eyeOffsetX + eSize*0.3, visualY - eSize*0.45); ctx.lineTo(eyeOffsetX + eSize*0.05, visualY - eSize*0.35);
         ctx.stroke();
+        // 頭頂尖角
         ctx.fillStyle = '#fef08a'; ctx.beginPath(); ctx.moveTo(-eSize*0.1, visualY - eSize*0.8); ctx.lineTo(eSize*0.1, visualY - eSize*0.8); ctx.lineTo(0, visualY - eSize*1.1); ctx.fill();
         ctx.lineWidth = 1; ctx.stroke();
     } else if (tier === 3) {
+        // Lv3: 機械護甲怪
         ctx.fillStyle = '#334155'; ctx.fillRect(-eSize*0.35, visualY - eSize*0.4, eSize*0.7, eSize*0.25);
         ctx.fillStyle = '#38bdf8'; ctx.fillRect(-eSize*0.2, visualY - eSize*0.32, eSize*0.4, eSize*0.08);
+        // 兩側護甲刺
         ctx.fillStyle = '#94a3b8'; ctx.beginPath(); 
         ctx.moveTo(-eSize*0.45, visualY - eSize*0.2); ctx.lineTo(-eSize*0.7, visualY - eSize*0.3); ctx.lineTo(-eSize*0.45, visualY - eSize*0.4);
         ctx.moveTo(eSize*0.45, visualY - eSize*0.2); ctx.lineTo(eSize*0.7, visualY - eSize*0.3); ctx.lineTo(eSize*0.45, visualY - eSize*0.4);
         ctx.fill(); ctx.stroke();
     } else if (tier === 4) {
+        // Lv4: 異形四眼怪
         ctx.fillStyle = 'black'; 
         ctx.beginPath(); ctx.arc(eyeOffsetX - eSize*0.15, visualY - eSize*0.25, eSize*0.08, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(eyeOffsetX + eSize*0.15, visualY - eSize*0.25, eSize*0.08, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(eyeOffsetX - eSize*0.1, visualY - eSize*0.5, eSize*0.05, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(eyeOffsetX + eSize*0.1, visualY - eSize*0.5, eSize*0.05, 0, Math.PI*2); ctx.fill();
+        // 發紅發光瞳孔
         ctx.fillStyle = '#ef4444';
         ctx.beginPath(); ctx.arc(eyeOffsetX - eSize*0.15, visualY - eSize*0.25, eSize*0.03, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(eyeOffsetX + eSize*0.15, visualY - eSize*0.25, eSize*0.03, 0, Math.PI*2); ctx.fill();
     } else if (tier === 5) {
+        // Lv5: 終極王冠魔首領
+        // 王冠
         ctx.fillStyle = '#334155';
         ctx.beginPath(); ctx.moveTo(-eSize*0.2, visualY - eSize*0.4); ctx.lineTo(-eSize*0.5, visualY - eSize*0.7); ctx.lineTo(-eSize*0.3, visualY - eSize*0.3); ctx.fill();
         ctx.beginPath(); ctx.moveTo(eSize*0.2, visualY - eSize*0.4); ctx.lineTo(eSize*0.5, visualY - eSize*0.7); ctx.lineTo(eSize*0.3, visualY - eSize*0.3); ctx.fill();
         ctx.fillStyle = '#fbbf24'; 
         ctx.beginPath(); ctx.moveTo(-eSize*0.6, visualY - eSize*0.5); ctx.lineTo(-eSize*0.8, visualY - eSize*0.8); ctx.lineTo(0, visualY - eSize*0.6); ctx.lineTo(eSize*0.8, visualY - eSize*0.8); ctx.lineTo(eSize*0.6, visualY - eSize*0.5); ctx.fill();
+        // 血紅雙眼
         ctx.fillStyle = '#ef4444';
         ctx.beginPath(); ctx.arc(eyeOffsetX - eSize*0.15, visualY - eSize*0.25, eSize*0.1, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(eyeOffsetX + eSize*0.15, visualY - eSize*0.25, eSize*0.1, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = 'black'; 
         ctx.beginPath(); ctx.arc(eyeOffsetX - eSize*0.15, visualY - eSize*0.25, eSize*0.04, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.arc(eyeOffsetX + eSize*0.15, visualY - eSize*0.25, eSize*0.04, 0, Math.PI*2); ctx.fill();
+        // 銳利巨齒
         ctx.fillStyle = 'black';
         ctx.beginPath(); ctx.arc(0, visualY + eSize*0.05, eSize*0.2, 0, Math.PI); ctx.fill();
         ctx.fillStyle = 'white';
@@ -614,6 +653,7 @@ function updateHTMLHUD() {
         lastHUDState.hp = player.hp;
     }
     
+    // 更新擊殺進度條
     if (lastHUDState.kills !== enemiesKilled) {
         if (uiElements.killFill && TOTAL_MONSTERS > 0) {
             let percentage = (enemiesKilled / TOTAL_MONSTERS) * 100;
@@ -652,13 +692,14 @@ function updateHTMLHUD() {
     }
 }
 
+// 高解析度畫布渲染，徹底解決起格及裁剪問題
 function drawHUDIcons() {
     let pC = document.getElementById('player-icon'); 
     if(!pC) return;
     let pCtx = pC.getContext('2d');
     pCtx.clearRect(0,0,pC.width,pC.height);
     pCtx.save();
-    pCtx.translate(82.5, 96); pCtx.scale(2.5, 2.5); 
+    pCtx.translate(82.5, 96); pCtx.scale(2.5, 2.5); // 精確置中與縮放
     pCtx.fillStyle = '#dc2626'; pCtx.beginPath(); pCtx.moveTo(-9, -7); pCtx.lineTo(-15, 15); pCtx.lineTo(15, 15); pCtx.lineTo(9, -7); pCtx.fill();
     pCtx.fillStyle = '#1d4ed8'; pCtx.fillRect(-9, -11, 18, 22); 
     pCtx.fillStyle = '#94a3b8'; pCtx.fillRect(-10, -11, 20, 12); 
@@ -676,6 +717,7 @@ function drawHUDIcons() {
         mCtx.clearRect(0,0,mC.width,mC.height);
         
         mCtx.save();
+        // 畫布為 150x150，進行 5 倍巨幅放大，並計算完美的中心偏移以保留王冠與角
         mCtx.translate(75, 105); mCtx.scale(5.0, 5.0); 
         drawMonsterEntity(mCtx, 14, mTypes[i].color, mTypes[i].tier, 0, true);
         mCtx.restore();
@@ -683,11 +725,12 @@ function drawHUDIcons() {
 }
 setTimeout(drawHUDIcons, 100);
 
+// --- 排行榜邏輯 ---
 function fetchLeaderboard() {
     if (!GAS_LEADERBOARD_URL) return;
     
-    // 💡 修正 1：加入 cache: 'no-store' 與隨機亂數，徹底杜絕瀏覽器快取
-    fetch(`${GAS_LEADERBOARD_URL}?action=getLeaderboard&t=${new Date().getTime()}_${Math.random()}`, { cache: 'no-store' })
+    // 💡 修正 1：隨機參數破除快取，不使用 cache 選項以免觸發 CORS 預檢
+    fetch(`${GAS_LEADERBOARD_URL}?action=getLeaderboard&t=${new Date().getTime()}_${Math.random()}`)
         .then(res => res.json())
         .then(data => renderLeaderboard(data))
         .catch(e => console.log("LB 獲取失敗", e));
@@ -707,8 +750,10 @@ function renderLeaderboard(data) {
     data.forEach((item, index) => {
         let li = document.createElement('li');
         let safeName = item.name.length > 6 ? item.name.substring(0, 6) + '..' : item.name;
+        // 將 "程度 X" 縮寫為 "L X" 或是 "LX" 以節省空間
         let shortDiff = item.diff.replace("程度 ", "L");
         
+        // 嚴格自動對齊：使用設定好的 Grid 系統
         li.innerHTML = `
             <span>${index + 1}.</span>
             <span>${item.cls}</span>
@@ -728,11 +773,19 @@ window.submitScore = async function() {
     let name = document.getElementById('lb-name').value.trim();
     
     if (!cls || !sid) { alert("請填寫班別及學號！"); return; }
-    if (!name) name = sid; 
+    if (!name) name = sid; // 如果沒有填寫名字，預設為學號
 
     if (!GAS_LEADERBOARD_URL) return;
 
     scoreSubmitted = true;
+    document.getElementById('submit-form').style.display = 'none';
+    document.getElementById('leaderboard-list').innerHTML = "<li>上傳中並更新排行榜...</li>";
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('zh-HK');
+    const timeStr = now.toLocaleTimeString('zh-HK');
+    const diff = "程度 " + currentDifficulty; 
+    
     // 依據不同程度乘上倍率
     let mult = { '1': 1, '2': 1.2, '3': 1.4, '4': 1.6, '5': 1.8 }[currentDifficulty] || 1;
     const score = Math.round(enemiesKilled * mult);
@@ -740,16 +793,16 @@ window.submitScore = async function() {
 
     const addUrl = `${GAS_LEADERBOARD_URL}?action=addScore&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(timeStr)}&diff=${encodeURIComponent(diff)}&cls=${encodeURIComponent(cls)}&sid=${encodeURIComponent(sid)}&name=${encodeURIComponent(name)}&score=${score}&t=${timestamp}`;
     
-    // 💡 修正 2：加入 await 確保成績寫入 Google Sheet 後，才去拉取新排行榜
+    // 💡 修正 2：確保成績寫入 Google Sheet 後，才去拉取新排行榜
     try {
-        await fetch(addUrl, { cache: 'no-store' });
+        await fetch(addUrl);
     } catch(e) {
         console.log("LB 上傳延遲", e);
     }
 
     try {
-        // 💡 修正 3：拉取排行榜時同樣杜絕快取
-        let res = await fetch(`${GAS_LEADERBOARD_URL}?action=getLeaderboard&t=${new Date().getTime()}_${Math.random()}`, { cache: 'no-store' });
+        // 💡 修正 3：拉取排行榜時杜絕快取
+        let res = await fetch(`${GAS_LEADERBOARD_URL}?action=getLeaderboard&t=${new Date().getTime()}_${Math.random()}`);
         let data = await res.json();
         data.push({ diff: diff, cls: cls, name: name, score: score, isMe: true });
         data.sort((a, b) => b.score - a.score);
@@ -775,6 +828,7 @@ window.returnToMenu = function() {
     scoreSubmitted = false;
 }
 
+// 支援自行填寫答案的新格式
 function formatInput(questionStr, ans) {
     return {
         isInput: true,
@@ -785,6 +839,7 @@ function formatInput(questionStr, ans) {
 
 function generateFallbackInput() {
     let wl = Math.max(0, player.weaponLevel);
+    // 當外部題庫讀取失敗時，改為使用雙位數乘法作為後備輸入題
     let num1 = getRandomInt(11, 20 + wl * 2); 
     let num2 = getRandomInt(2, 9);
     let ans = num1 * num2;
@@ -793,14 +848,16 @@ function generateFallbackInput() {
 
 function generateLevel1Question() {
     let wl = Math.max(0, player.weaponLevel);
+    // 基礎 10-50，隨著武器等級而提高數值範圍
     let min = 1 + wl * 2;
     let max = 30 + wl * 5;
     let A = getRandomInt(min, max);
     let B = getRandomInt(min, max);
     let isAdd = Math.random() > 0.5;
-    if (!isAdd && A < B) { let temp = A; A = B; B = temp; } 
+    if (!isAdd && A < B) { let temp = A; A = B; B = temp; } // 保證減法結果一定是整數 (此處確保為正整數)
     let ans = isAdd ? A + B : A - B;
     let op = isAdd ? '+' : '-';
+    // 程度1 改為輸入題型
     return formatInput(`${A} ${op} ${B}`, ans);
 }
 
@@ -808,6 +865,7 @@ function generateLevel2Question() {
     let wl = Math.max(0, player.weaponLevel);
     let maxV = Math.floor(3 + wl * 1.5);
     if (maxV < 3) maxV = 3;
+    // 預設 8 種四則運算組合 (先乘除後加減原則)，確保整除和正數
     let patterns = [
         () => { let b=getRandomInt(2,maxV), c=getRandomInt(2,maxV), a=getRandomInt(1,maxV*2); return {q: `${a} + ${b} \\times ${c}`, a: a+b*c}; },
         () => { let b=getRandomInt(2,maxV), c=getRandomInt(2,maxV), a=getRandomInt(b*c+1, b*c+20); return {q: `${a} - ${b} \\times ${c}`, a: a-b*c}; },
@@ -819,6 +877,7 @@ function generateLevel2Question() {
         () => { let b=getRandomInt(2,10), a=b*getRandomInt(2,maxV), c=getRandomInt(1,a/b-1); return {q: `${a} \\div ${b} - ${c}`, a: a/b-c}; }
     ];
     let p = patterns[getRandomInt(0, patterns.length)]();
+    // 程度2 改為輸入題型
     return formatInput(p.q, p.a);
 }
 
@@ -827,6 +886,7 @@ function triggerMath(type) {
     gameState = 'MATH_TIME';
     isShooting = false; leftJoy.active = false;
     
+    // 玩家回答問題時，馬上停止射擊聲音
     let sSfx = document.getElementById('shootSfx'); 
     if (sSfx && !sSfx.paused) { sSfx.pause(); sSfx.currentTime = 0; }
     
@@ -853,6 +913,7 @@ function triggerMath(type) {
             qData = generateLevel2Question();
         } else if (diffStr === '3') {
             if (questionsSolved < 3) {
+                // 程度 3：前三題出簡單加減法 (此處借用程度1的出題，故也是輸入題型)
                 qData = generateLevel1Question();
             } else if (typeof generateIndicesQuestions === 'function') {
                 qData = generateIndicesQuestions(1, 1)[0];
@@ -861,9 +922,11 @@ function triggerMath(type) {
             }
         } else if (diffStr === '4' || diffStr === '5') {
             let level = diffStr === '4' ? 1 : 2;
+            
             let topics = ['rounding', 'expansion', 'factorization', 'indices'];
             let t = topics[getRandomInt(0, topics.length)];
             
+            // 隨機抽取 4 種題庫中的一題
             if (t === 'rounding' && typeof generateRoundingQuestions === 'function') qData = generateRoundingQuestions(1, level)[0];
             else if (t === 'expansion' && typeof generateExpansionQuestions === 'function') qData = generateExpansionQuestions(1, level)[0];
             else if (t === 'factorization' && typeof generateFactorizationQuestions === 'function') qData = generateFactorizationQuestions(1, level)[0];
@@ -873,6 +936,7 @@ function triggerMath(type) {
             qData = generateFallbackInput();
         }
     } catch(e) { 
+        // 在 Console 印出警告，幫助尋找哪一個題庫發生問題
         console.error("警告：外部進階題庫讀取失敗 (難度 " + diffStr + ")，已自動切換至後備輸入題。請檢查 JS 檔案。", e); 
         qData = generateFallbackInput(); 
     }
@@ -887,6 +951,7 @@ function triggerMath(type) {
         optsContainer.innerHTML = '';
         
         if (qData.isInput) {
+            // 動態產生手動輸入數字鍵盤與顯示區
             optsContainer.style.display = 'flex';
             optsContainer.style.flexDirection = 'column';
             optsContainer.style.alignItems = 'center';
@@ -894,11 +959,13 @@ function triggerMath(type) {
 
             let currentInputValue = "";
 
+            // 顯示區
             let inputDisplay = document.createElement('div');
             inputDisplay.id = 'math-num-display';
             inputDisplay.style = "font-size: 32px; padding: 10px; width: 240px; min-height: 45px; text-align: center; border-radius: 8px; border: 2px solid #94a3b8; background: #334155; color: #fbbf24; font-weight: bold; display: flex; justify-content: center; align-items: center; letter-spacing: 2px;";
             inputDisplay.textContent = "";
 
+            // 數字鍵盤
             let numpad = document.createElement('div');
             numpad.style = "display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 260px; margin-top: 5px;";
 
@@ -932,6 +999,7 @@ function triggerMath(type) {
                 numpad.appendChild(btn);
             });
 
+            // 確定按鈕
             let submitBtn = document.createElement('button');
             submitBtn.textContent = '確定';
             submitBtn.style = "background: #3b82f6; color: white; border: 2px solid #94a3b8; padding: 12px 40px; font-size: 24px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; width: 260px; margin-top: 5px;";
@@ -939,7 +1007,7 @@ function triggerMath(type) {
             submitBtn.onmouseout = () => submitBtn.style.background = '#3b82f6';
             submitBtn.onclick = () => {
                 if (gameState !== 'MATH_TIME') return;
-                gameState = 'MATH_ANSWERED'; 
+                gameState = 'MATH_ANSWERED'; // 暫停時間與禁用輸入
                 submitBtn.disabled = true;
 
                 let userVal = parseFloat(currentInputValue);
@@ -962,6 +1030,7 @@ function triggerMath(type) {
                 }, 1200);
             };
 
+            // 電腦實體鍵盤輸入支援
             if (window.mathKeydownHandler) {
                 window.removeEventListener('keydown', window.mathKeydownHandler);
             }
@@ -988,6 +1057,7 @@ function triggerMath(type) {
             optsContainer.appendChild(submitBtn);
 
         } else {
+            // 恢復原版選擇題 (MC) 佈局，並加入反饋與停頓
             optsContainer.style.display = 'grid'; 
             let optionElements = [];
             qData.options.forEach(opt => {
@@ -998,7 +1068,7 @@ function triggerMath(type) {
                 
                 btn.onclick = () => {
                     if (gameState !== 'MATH_TIME') return;
-                    gameState = 'MATH_ANSWERED'; 
+                    gameState = 'MATH_ANSWERED'; // 暫停時間與禁用點擊
                     
                     if (opt.isCorrect) {
                         btn.style.backgroundColor = 'rgba(74, 222, 128, 0.2)';
@@ -1032,7 +1102,7 @@ function triggerMath(type) {
         overlay.style.display = 'flex';
     }
     
-    mathTimer = 600; 
+    mathTimer = 600; // 10 秒
 }
 
 window.submitMCQ = function(isCorrect) {
@@ -1288,6 +1358,7 @@ function update() {
     if (gameState === 'START_MENU') return;
 
     if (gameState === 'MATH_TIME' || gameState === 'MATH_ANSWERED') {
+        // 玩家回答問題時，所有補充包暫停扣除時間 (透過推移生成時間來凍結壽命計算)
         for (let i = 0; i < lootBoxes.length; i++) lootBoxes[i].spawnTime++;
         for (let i = 0; i < ammoBoxes.length; i++) ammoBoxes[i].spawnTime++;
 
@@ -1299,7 +1370,7 @@ function update() {
                 uiElements.mathTimerBar.style.backgroundColor = mathTimer < 180 ? '#ef4444' : '#4ade80';
             }
             if (mathTimer <= 0) {
-                gameState = 'MATH_ANSWERED'; 
+                gameState = 'MATH_ANSWERED'; // 防止超時後鍵盤繼續輸入
                 closeMathOverlay(false);
                 addFloatingText("⏳ 時間到！寶箱已損毀。", player.x, player.y - 40, '#ef4444');
             }
@@ -1356,6 +1427,7 @@ function update() {
     player.x = Math.max(UI_BOUND + player.radius, Math.min(logicalWidth - player.radius, player.x));
     player.y = Math.max(player.radius, Math.min(logicalHeight - player.radius, player.y));
 
+    // 游標精準跟隨瞄準 (Mouse Aiming)
     if (!('ontouchstart' in window) || !leftJoy.active) { 
         player.angle = Math.atan2(mouseY - player.y, mouseX - player.x) || 0;
     }
@@ -1466,6 +1538,7 @@ function update() {
     }
 }
 
+// 🚀 畫布效能極限優化：採用設備像素密度進行高清渲染
 function draw() {
     if (gameState === 'START_MENU') {
         ctx.fillStyle = '#0f172a'; 
@@ -1474,6 +1547,7 @@ function draw() {
     }
 
     ctx.save();
+    
     ctx.fillStyle = '#d2b48c'; 
     ctx.fillRect(0, 0, logicalWidth, logicalHeight);
     
@@ -1506,6 +1580,7 @@ function draw() {
             if (timeLeft < 180 && globalTime % 20 < 10) ctx.globalAlpha = 0.4;
             ctx.save(); ctx.translate(box.x, box.y);
             
+            // 優化: Fake Glow
             ctx.fillStyle = 'rgba(234, 179, 8, 0.2)'; ctx.beginPath(); ctx.arc(0, -15, 30 + glow, 0, Math.PI*2); ctx.fill();
 
             ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(0, 0, 24, 12, 0, 0, Math.PI*2); ctx.fill();
@@ -1522,6 +1597,7 @@ function draw() {
             if (timeLeft < 180 && globalTime % 20 < 10) ctx.globalAlpha = 0.4;
             ctx.save(); ctx.translate(box.x, box.y);
 
+            // 優化: Fake Glow
             ctx.fillStyle = 'rgba(56, 189, 248, 0.2)'; ctx.beginPath(); ctx.arc(0, -15, 30 + glow, 0, Math.PI*2); ctx.fill();
 
             ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(0, 0, 20, 10, 0, 0, Math.PI*2); ctx.fill();
@@ -1539,9 +1615,11 @@ function draw() {
             ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(0, 0, e.size*0.5, e.size*0.2, 0, 0, Math.PI*2); ctx.fill();
             let visualY = -10 - bob;
             
+            // 放大遊戲內魔怪的視覺比例 (乘以 1.4)，讓五個等級的特徵更明顯，同時維持碰撞判定不變
             let visualSize = e.size * 1.4;
             drawMonsterEntity(ctx, visualSize, e.color, e.tier, visualY, isFacingRight);
             
+            // Fake shadow text for performance
             ctx.fillStyle = 'black'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center'; ctx.fillText(`Lv.${e.tier}`, 2, visualY - visualSize*0.9 - 8);
             ctx.fillStyle = 'white'; ctx.fillText(`Lv.${e.tier}`, 0, visualY - visualSize*0.9 - 10);
             
@@ -1588,6 +1666,7 @@ function draw() {
 
     for (let b of bullets) {
         ctx.save(); ctx.translate(b.x, b.y - 15); ctx.rotate(Math.atan2(b.vy, b.vx)); 
+        // 優化: Fake Glow 代替 shadowBlur
         ctx.globalAlpha = 0.4; ctx.fillStyle = b.glow; ctx.beginPath(); ctx.roundRect(-10, -b.radius, 20 + b.radius*4, b.radius*2, 5); ctx.fill();
         ctx.globalAlpha = 1.0; ctx.fillStyle = b.color; ctx.beginPath(); ctx.roundRect(-10, -b.radius/2, 20 + b.radius*2, b.radius, 5); ctx.fill();
         ctx.restore();
@@ -1599,6 +1678,7 @@ function draw() {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (let text of floatingTexts) {
         ctx.globalAlpha = text.life; ctx.font = `bold ${text.size}px Arial`;
+        // 優化: 移除 shadowBlur，改用繪製兩次文字模擬邊框
         ctx.fillStyle = 'black'; ctx.fillText(text.text, text.x + 2, text.y + 2);
         ctx.fillStyle = text.color; ctx.fillText(text.text, text.x, text.y);
     }
@@ -1606,6 +1686,7 @@ function draw() {
 
     let gameCenterX = UI_BOUND + (logicalWidth - UI_BOUND) / 2;
 
+    // --- 繪製正上方目前程度與倍率 (加入課題名稱並分2行顯示) ---
     if (gameState === 'PLAYING') {
         ctx.save();
         ctx.textAlign = 'center';
@@ -1624,17 +1705,19 @@ function draw() {
         let line1Text = `程度 ${currentDifficulty} (分數 x${currentMult})`;
         let line2Text = currentLabel;
         
+        // 第一行 (程度與分數倍大，字體較大)
         ctx.textBaseline = 'top';
         ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; 
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; // 黑色陰影
         ctx.fillText(line1Text, gameCenterX + 2, 22);
-        ctx.fillStyle = '#fbbf24'; 
+        ctx.fillStyle = '#fbbf24'; // 黃色文字
         ctx.fillText(line1Text, gameCenterX, 20);
 
+        // 第二行 (該程度內容敘述，字體較小)
         ctx.font = 'bold 16px Arial';
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; 
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; // 黑色陰影
         ctx.fillText(line2Text, gameCenterX + 2, 52);
-        ctx.fillStyle = '#e2e8f0'; 
+        ctx.fillStyle = '#e2e8f0'; // 白色偏灰文字
         ctx.fillText(line2Text, gameCenterX, 50);
 
         ctx.restore();
@@ -1642,7 +1725,7 @@ function draw() {
 
     if (gameState === 'PLAYING' && ('ontouchstart' in window)) {
         const drawJoy = (joy, base) => {
-            if (!joy.active) return; 
+            if (!joy.active) return; // 只有在按住時才繪製搖桿，實現完全浮動隱形體驗
             ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; ctx.beginPath(); ctx.arc(base.x, base.y, joyRadius, 0, Math.PI*2); ctx.fill();
             ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.stroke();
             ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.beginPath(); ctx.arc(joy.stick.x, joy.stick.y, joyRadius/2.5, 0, Math.PI*2); ctx.fill();
@@ -1658,16 +1741,18 @@ function draw() {
         let finalScore = Math.round(enemiesKilled * mult);
 
         if (gameState === 'VICTORY') {
-            ctx.fillStyle = 'black'; ctx.font = 'bold 60px Arial'; ctx.fillText('MISSION ACCOMPLISHED!', gameCenterX + 3, logicalHeight/2 - 147); 
+            ctx.fillStyle = 'black'; ctx.font = 'bold 60px Arial'; ctx.fillText('MISSION ACCOMPLISHED!', gameCenterX + 3, logicalHeight/2 - 147); // Fake shadow
             ctx.fillStyle = '#fbbf24'; ctx.fillText('MISSION ACCOMPLISHED!', gameCenterX, logicalHeight/2 - 150);
             ctx.fillStyle = 'white'; ctx.font = 'bold 24px Arial'; 
             let finalWepName = player.weaponLevel >= 0 ? WEAPONS[player.weaponLevel].name : '無';
             ctx.fillText(`成功擊殺終極 Boss！ 最終武器: ${finalWepName}`, gameCenterX, logicalHeight/2 - 80);
+            // 顯示計算公式
             ctx.fillText(`總得分: ${enemiesKilled} x ${mult} = ${finalScore}分`, gameCenterX, logicalHeight/2 - 45);
         } else {
             ctx.fillStyle = 'black'; ctx.font = 'bold 80px Arial'; ctx.fillText('YOU DIED', gameCenterX + 4, logicalHeight/2 - 146);
             ctx.fillStyle = '#ef4444'; ctx.fillText('YOU DIED', gameCenterX, logicalHeight/2 - 150);
             ctx.fillStyle = 'white'; ctx.font = 'bold 28px Arial';
+            // 顯示計算公式
             ctx.fillText(`擊殺數: ${enemiesKilled} / ${TOTAL_MONSTERS} (總得分: ${enemiesKilled} x ${mult} = ${finalScore}分)`, gameCenterX, logicalHeight/2 - 80);
         }
     }
@@ -1676,74 +1761,87 @@ function draw() {
 }
 
 async function loadGameData() {
-    const timestamp = new Date().getTime();
     if (GAS_WEB_APP_URL) {
         try {
-            let res = await fetch(`${GAS_WEB_APP_URL}?t=${timestamp}`); 
+            let res = await fetch(`${GAS_WEB_APP_URL}?action=getGameData&t=${new Date().getTime()}_${Math.random()}`); 
             let data = await res.json();
             
-            // 判斷是否回傳錯誤 (例如 Sheet ID 沒改)
-            if (data.error) {
-                console.error("後端回傳錯誤，請檢查 GAS 上的 Sheet ID:", data.error);
-            }
-            
-            // 1. 更新武器資料 (修正錯位)
-            if (data.weapons && data.weapons.length > 2) { 
-                let rows = data.weapons;
+            let weaponsData = data.weapons || data.Weapons || data['Weapons'] || data['設定武器'];
+            if (weaponsData && weaponsData.length > 1) {
+                let rows = weaponsData;
+                let wepIdx = 0;
                 
-                // 讀取武器箱與彈藥箱出現時間：改從 Sheet 第3列 (index 2) 讀取，因為第2列是空白的
-                if (rows[2].length > 9 && rows[2][9]) { let val = parseFloat(rows[2][9]); if (!isNaN(val) && val > 0) lootBoxSpawnInterval = Math.floor(val * 60); }
-                if (rows[2].length > 10 && rows[2][10]) { let val = parseFloat(rows[2][10]); if (!isNaN(val) && val > 0) ammoBoxSpawnInterval = Math.floor(val * 60); }
-                
-                // 迴圈從 i=2 開始讀取 (跳過標題與"沒有槍")，並對應到 WEAPONS[i-2]
-                for(let i=2; i<rows.length; i++) {
-                    let wIndex = i - 2; 
-                    if (rows[i].length >= 7 && WEAPONS[wIndex]) {
-                        WEAPONS[wIndex].name = String(rows[i][1]).trim() || WEAPONS[wIndex].name; 
-                        WEAPONS[wIndex].damage = parseFloat(rows[i][2]) || WEAPONS[wIndex].damage; 
-                        WEAPONS[wIndex].bullets = parseInt(rows[i][3]) || WEAPONS[wIndex].bullets;
-                        WEAPONS[wIndex].fireRate = parseInt(rows[i][4]) || WEAPONS[wIndex].fireRate; 
-                        WEAPONS[wIndex].playerSpeed = parseFloat(rows[i][5]) || WEAPONS[wIndex].playerSpeed; 
-                        WEAPONS[wIndex].reloadAmmo = parseInt(rows[i][6]) || WEAPONS[wIndex].reloadAmmo;
-                        WEAPONS[wIndex].magCapacity = parseInt(rows[i][7]) || WEAPONS[wIndex].magCapacity; 
-                        WEAPONS[wIndex].ammoBoxRefill = parseInt(rows[i][8]) || WEAPONS[wIndex].ammoBoxRefill;
-                    }
-                }
-                console.log("✅ 武器資料同步成功！", WEAPONS);
-            }
-            
-            // 2. 更新魔物資料 (原本的 i=1 對應 MONSTER_BASE[0] 是正確的)
-            if (data.monsters && data.monsters.length > 1) {
-                let rows = data.monsters;
                 for(let i=1; i<rows.length; i++) {
-                    if (rows[i].length >= 5 && MONSTER_BASE[i-1]) {
-                        MONSTER_BASE[i-1].name = String(rows[i][1]).trim() || MONSTER_BASE[i-1].name; 
-                        MONSTER_BASE[i-1].count = parseInt(rows[i][2]) || MONSTER_BASE[i-1].count;
-                        MONSTER_BASE[i-1].hp = parseFloat(rows[i][3]) || MONSTER_BASE[i-1].hp; 
-                        MONSTER_BASE[i-1].speed = parseFloat(rows[i][4]) || MONSTER_BASE[i-1].speed;
+                    let levelCol = String(rows[i][0]).trim();
+                    let nameCol = String(rows[i][1]).trim();
+                    
+                    if (!levelCol && !nameCol) continue;
+                    
+                    // 從整行掃描全域箱子時間設定
+                    if (rows[i].length > 9 && rows[i][9] !== "") { 
+                        let val = parseFloat(rows[i][9]); 
+                        if (!isNaN(val) && val > 0) lootBoxSpawnInterval = Math.floor(val * 60); 
+                    }
+                    if (rows[i].length > 10 && rows[i][10] !== "") { 
+                        let val = parseFloat(rows[i][10]); 
+                        if (!isNaN(val) && val > 0) ammoBoxSpawnInterval = Math.floor(val * 60); 
+                    }
+                    
+                    // 判斷是否為無裝備的「第 0 級」
+                    let isBaseLevel = levelCol === "0" || levelCol.includes("0") || nameCol.includes("空手") || nameCol.includes("沒有槍") || nameCol.includes("未裝備");
+                    
+                    if (isBaseLevel) {
+                        if (rows[i].length > 5 && rows[i][5] !== "") {
+                            let spd = parseFloat(rows[i][5]);
+                            if (!isNaN(spd)) basePlayerSpeed = spd;
+                        }
+                        if (gameState === 'START_MENU') player.speed = basePlayerSpeed;
+                    } else if (wepIdx < WEAPONS.length && rows[i].length >= 6) {
+                        WEAPONS[wepIdx].name = nameCol || WEAPONS[wepIdx].name; 
+                        
+                        // 強制精確數值解析，修復「填寫 0 會被略過」的 Bug
+                        if (rows[i][2] !== "") { let v = parseFloat(rows[i][2]); if(!isNaN(v)) WEAPONS[wepIdx].damage = v; }
+                        if (rows[i][3] !== "") { let v = parseInt(rows[i][3]); if(!isNaN(v)) WEAPONS[wepIdx].bullets = v; }
+                        if (rows[i][4] !== "") { let v = parseInt(rows[i][4]); if(!isNaN(v)) WEAPONS[wepIdx].fireRate = v; }
+                        if (rows[i][5] !== "") { let v = parseFloat(rows[i][5]); if(!isNaN(v)) WEAPONS[wepIdx].playerSpeed = v; }
+                        if (rows[i].length > 6 && rows[i][6] !== "") { let v = parseInt(rows[i][6]); if(!isNaN(v)) WEAPONS[wepIdx].reloadAmmo = v; }
+                        if (rows[i].length > 7 && rows[i][7] !== "") { let v = parseInt(rows[i][7]); if(!isNaN(v)) WEAPONS[wepIdx].magCapacity = v; }
+                        if (rows[i].length > 8 && rows[i][8] !== "") { let v = parseInt(rows[i][8]); if(!isNaN(v)) WEAPONS[wepIdx].ammoBoxRefill = v; }
+                        wepIdx++;
                     }
                 }
-                console.log("✅ 魔物資料同步成功！", MONSTER_BASE);
             }
-        } catch(e) { 
-            console.error("❌ 載入數據失敗 (可能跨域被阻擋或網址失效)，使用本地預設值:", e); 
-        }
+            
+            let monstersData = data.monsters || data.Monsters || data['Monsters'] || data['設定魔物'];
+            if (monstersData && monstersData.length > 1) {
+                let rows = monstersData;
+                for(let i=1; i<rows.length; i++) {
+                    let mIdx = i - 1; // 確保按順序對應到 MONSTER_BASE
+                    if (rows[i].length >= 5 && mIdx >= 0 && mIdx < MONSTER_BASE.length) {
+                        if (rows[i][1] !== "") MONSTER_BASE[mIdx].name = String(rows[i][1]).trim() || MONSTER_BASE[mIdx].name; 
+                        if (rows[i][2] !== "") { let v = parseInt(rows[i][2]); if(!isNaN(v)) MONSTER_BASE[mIdx].count = v; }
+                        if (rows[i][3] !== "") { let v = parseFloat(rows[i][3]); if(!isNaN(v)) MONSTER_BASE[mIdx].hp = v; }
+                        if (rows[i][4] !== "") { let v = parseFloat(rows[i][4]); if(!isNaN(v)) MONSTER_BASE[mIdx].speed = v; }
+                    }
+                }
+            }
+        } catch(e) { console.error("載入數據失敗，使用本地預設值:", e); }
     }
     document.getElementById('loading-screen').style.display = 'none';
     
-    // 進入選單畫面
     let menu = document.getElementById('start-menu');
     if (menu) menu.style.display = 'flex';
     gameState = 'START_MENU';
     gameLoop(); 
 }
-    
+
 function gameLoop() { 
     if (typeof update === 'function') update(); 
     if (typeof draw === 'function') draw(); 
     requestAnimationFrame(gameLoop); 
 }
 
+// 遊戲入口
 if (document.getElementById('start-menu')) {
     loadGameData();
 }
