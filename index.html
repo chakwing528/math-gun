@@ -1679,71 +1679,65 @@ async function loadGameData() {
     const timestamp = new Date().getTime();
     if (GAS_WEB_APP_URL) {
         try {
-            // 💡 修正 4：武器數據載入時強制要求最新資源，禁止讀取舊版快取
-            let res = await fetch(`${GAS_WEB_APP_URL}?action=getGameData&t=${new Date().getTime()}_${Math.random()}`, { cache: 'no-store' }); 
+            let res = await fetch(`${GAS_WEB_APP_URL}?t=${timestamp}`); 
             let data = await res.json();
-            if (data.weapons && data.weapons.length > 1) {
+            
+            // 判斷是否回傳錯誤 (例如 Sheet ID 沒改)
+            if (data.error) {
+                console.error("後端回傳錯誤，請檢查 GAS 上的 Sheet ID:", data.error);
+            }
+            
+            // 1. 更新武器資料 (修正錯位)
+            if (data.weapons && data.weapons.length > 2) { 
                 let rows = data.weapons;
-                let wepIdx = 0;
                 
-                for(let i=1; i<rows.length; i++) {
-                    let levelCol = String(rows[i][0]).trim();
-                    let nameCol = String(rows[i][1]).trim();
-                    
-                    if (!levelCol && !nameCol) continue;
-                    
-                    // 從整行掃描全域箱子時間設定
-                    if (rows[i].length > 9 && rows[i][9] !== "") { 
-                        let val = parseFloat(rows[i][9]); 
-                        if (!isNaN(val) && val > 0) lootBoxSpawnInterval = Math.floor(val * 60); 
-                    }
-                    if (rows[i].length > 10 && rows[i][10] !== "") { 
-                        let val = parseFloat(rows[i][10]); 
-                        if (!isNaN(val) && val > 0) ammoBoxSpawnInterval = Math.floor(val * 60); 
-                    }
-                    
-                    // 判斷是否為無裝備的「第 0 級」
-                    let isBaseLevel = levelCol === "0" || nameCol.includes("空手") || nameCol.includes("沒有槍");
-                    
-                    if (isBaseLevel) {
-                        if (rows[i].length > 5 && rows[i][5] !== "") {
-                            basePlayerSpeed = parseFloat(rows[i][5]) || basePlayerSpeed;
-                        }
-                        if (gameState === 'START_MENU') player.speed = basePlayerSpeed;
-                    } else if (wepIdx < WEAPONS.length && rows[i].length >= 6) {
-                        WEAPONS[wepIdx].name = nameCol || WEAPONS[wepIdx].name; 
-                        if (rows[i][2] !== "") WEAPONS[wepIdx].damage = parseFloat(rows[i][2]) || WEAPONS[wepIdx].damage; 
-                        if (rows[i][3] !== "") WEAPONS[wepIdx].bullets = parseInt(rows[i][3]) || WEAPONS[wepIdx].bullets;
-                        if (rows[i][4] !== "") WEAPONS[wepIdx].fireRate = parseInt(rows[i][4]) || WEAPONS[wepIdx].fireRate; 
-                        if (rows[i][5] !== "") WEAPONS[wepIdx].playerSpeed = parseFloat(rows[i][5]) || WEAPONS[wepIdx].playerSpeed; 
-                        if (rows[i].length > 6 && rows[i][6] !== "") WEAPONS[wepIdx].reloadAmmo = parseInt(rows[i][6]) || WEAPONS[wepIdx].reloadAmmo;
-                        if (rows[i].length > 7 && rows[i][7] !== "") WEAPONS[wepIdx].magCapacity = parseInt(rows[i][7]) || WEAPONS[wepIdx].magCapacity; 
-                        if (rows[i].length > 8 && rows[i][8] !== "") WEAPONS[wepIdx].ammoBoxRefill = parseInt(rows[i][8]) || WEAPONS[wepIdx].ammoBoxRefill;
-                        wepIdx++;
+                // 讀取武器箱與彈藥箱出現時間：改從 Sheet 第3列 (index 2) 讀取，因為第2列是空白的
+                if (rows[2].length > 9 && rows[2][9]) { let val = parseFloat(rows[2][9]); if (!isNaN(val) && val > 0) lootBoxSpawnInterval = Math.floor(val * 60); }
+                if (rows[2].length > 10 && rows[2][10]) { let val = parseFloat(rows[2][10]); if (!isNaN(val) && val > 0) ammoBoxSpawnInterval = Math.floor(val * 60); }
+                
+                // 迴圈從 i=2 開始讀取 (跳過標題與"沒有槍")，並對應到 WEAPONS[i-2]
+                for(let i=2; i<rows.length; i++) {
+                    let wIndex = i - 2; 
+                    if (rows[i].length >= 7 && WEAPONS[wIndex]) {
+                        WEAPONS[wIndex].name = String(rows[i][1]).trim() || WEAPONS[wIndex].name; 
+                        WEAPONS[wIndex].damage = parseFloat(rows[i][2]) || WEAPONS[wIndex].damage; 
+                        WEAPONS[wIndex].bullets = parseInt(rows[i][3]) || WEAPONS[wIndex].bullets;
+                        WEAPONS[wIndex].fireRate = parseInt(rows[i][4]) || WEAPONS[wIndex].fireRate; 
+                        WEAPONS[wIndex].playerSpeed = parseFloat(rows[i][5]) || WEAPONS[wIndex].playerSpeed; 
+                        WEAPONS[wIndex].reloadAmmo = parseInt(rows[i][6]) || WEAPONS[wIndex].reloadAmmo;
+                        WEAPONS[wIndex].magCapacity = parseInt(rows[i][7]) || WEAPONS[wIndex].magCapacity; 
+                        WEAPONS[wIndex].ammoBoxRefill = parseInt(rows[i][8]) || WEAPONS[wIndex].ammoBoxRefill;
                     }
                 }
+                console.log("✅ 武器資料同步成功！", WEAPONS);
             }
+            
+            // 2. 更新魔物資料 (原本的 i=1 對應 MONSTER_BASE[0] 是正確的)
             if (data.monsters && data.monsters.length > 1) {
                 let rows = data.monsters;
                 for(let i=1; i<rows.length; i++) {
                     if (rows[i].length >= 5 && MONSTER_BASE[i-1]) {
-                        if (rows[i][1] !== "") MONSTER_BASE[i-1].name = String(rows[i][1]).trim() || MONSTER_BASE[i-1].name; 
-                        if (rows[i][2] !== "") MONSTER_BASE[i-1].count = parseInt(rows[i][2]) || MONSTER_BASE[i-1].count;
-                        if (rows[i][3] !== "") MONSTER_BASE[i-1].hp = parseFloat(rows[i][3]) || MONSTER_BASE[i-1].hp; 
-                        if (rows[i][4] !== "") MONSTER_BASE[i-1].speed = parseFloat(rows[i][4]) || MONSTER_BASE[i-1].speed;
+                        MONSTER_BASE[i-1].name = String(rows[i][1]).trim() || MONSTER_BASE[i-1].name; 
+                        MONSTER_BASE[i-1].count = parseInt(rows[i][2]) || MONSTER_BASE[i-1].count;
+                        MONSTER_BASE[i-1].hp = parseFloat(rows[i][3]) || MONSTER_BASE[i-1].hp; 
+                        MONSTER_BASE[i-1].speed = parseFloat(rows[i][4]) || MONSTER_BASE[i-1].speed;
                     }
                 }
+                console.log("✅ 魔物資料同步成功！", MONSTER_BASE);
             }
-        } catch(e) { console.error("載入數據失敗，使用本地預設值:", e); }
+        } catch(e) { 
+            console.error("❌ 載入數據失敗 (可能跨域被阻擋或網址失效)，使用本地預設值:", e); 
+        }
     }
     document.getElementById('loading-screen').style.display = 'none';
     
+    // 進入選單畫面
     let menu = document.getElementById('start-menu');
     if (menu) menu.style.display = 'flex';
     gameState = 'START_MENU';
     gameLoop(); 
 }
-
+    
 function gameLoop() { 
     if (typeof update === 'function') update(); 
     if (typeof draw === 'function') draw(); 
