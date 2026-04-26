@@ -153,7 +153,7 @@
             align-items: center; 
             gap: 12px; 
             position: absolute; 
-            top: 45%; /* 降低起點，絕對不遮擋文字 */
+            top: 45%; /* 將原本的 55% 改為 40%，數字越小表單越靠上 */
             transform: translate(-50%, 0); 
             background: rgba(30, 41, 59, 0.95); 
             padding: 25px; 
@@ -305,8 +305,8 @@
             <button class="skip-btn" onclick="window.returnToMenu()">略過並重玩</button>
         </div>
 
-        <!-- 確保版本號隨時可見 V83 -->
-        <div id="version-tag">Math Survival V83</div>
+        <!-- 確保版本號隨時可見 V84 -->
+        <div id="version-tag">Math Survival V84</div>
     </div>
 
     <audio id="bgm" src="audio/bgm.mp3" loop></audio>
@@ -821,7 +821,7 @@ function renderLeaderboard(data) {
         topDisplay.innerHTML = `
             <div style="background: rgba(234, 179, 8, 0.3); border: 2px solid #f59e0b; border-radius: 6px; padding: 10px; margin-bottom: 8px; color: #fff; text-align: center;">
                 <div style="font-weight: bold; font-size: 16px; margin-bottom: 4px;">你的排名：第 ${myRank} 名</div>
-                <div style="font-size: 14px; color: #cbd5e1;">${displayCls} ${safeName}  :  ${myItem.score}分 (${shortDiff})</div>
+                <div style="font-size: 14px; color: #cbd5e1;">${displayCls} ${safeName} ${myItem.score}分 (${shortDiff})</div>
             </div>
         `;
         topDisplay.style.display = 'block';
@@ -907,6 +907,12 @@ window.returnToMenu = function() {
     if (menu) menu.style.display = 'flex';
     gameState = 'START_MENU';
     scoreSubmitted = false;
+    
+    // 每次返回選單/展開新一局時，自動清除輸入框內的資料
+    let clsInput = document.getElementById('lb-class');
+    let sidInput = document.getElementById('lb-sid');
+    if (clsInput) clsInput.value = '';
+    if (sidInput) sidInput.value = '';
 }
 
 // 支援自行填寫答案的新格式
