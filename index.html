@@ -888,7 +888,30 @@ window.submitScore = async function() {
         console.log("讀取最新排行榜失敗", e);
     }
     
-    leaderboardData.push({ diff: diff, cls: cls, sid: sid, name: playerName, score: score, isMe: true });
+    // ==========================================
+    // 💡 新增：防重複機制，檢查伺服器是否已經記錄了剛剛上傳的資料
+    // ==========================================
+    let alreadyExists = false;
+    for (let i = 0; i < leaderboardData.length; i++) {
+        let item = leaderboardData[i];
+        let itemSidStr = item.sid != null ? String(item.sid).toUpperCase() : "";
+        let itemClsStr = item.cls != null ? String(item.cls).toUpperCase() : "";
+        
+        // 如果伺服器傳回的榜單中，已經包含這筆相同的成績與身分
+        if (itemSidStr === sid && itemClsStr === cls && item.score === score && item.diff === diff && !item.isMe) {
+            item.isMe = true;           // 標記為自己，觸發高亮
+            item.name = playerName;     // 確保顯示最新配對到的名字
+            alreadyExists = true;       // 記錄為「已存在」
+            break;                      // 標記一筆就夠了，退出迴圈
+        }
+    }
+
+    // 只有在伺服器還來不及更新的時候，才手動補上這筆資料，避免顯示兩行
+    if (!alreadyExists) {
+        leaderboardData.push({ diff: diff, cls: cls, sid: sid, name: playerName, score: score, isMe: true });
+    }
+    // ==========================================
+    
     leaderboardData.sort((a, b) => b.score - a.score);
     renderLeaderboard(leaderboardData);
 }
